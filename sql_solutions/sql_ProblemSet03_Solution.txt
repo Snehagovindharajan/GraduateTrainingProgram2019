@@ -447,9 +447,13 @@ mysql> select title from movie group by director having count(mid)>1;
 
 19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
-mysql> select title,avg(stars) as average from movie m join rating r on m.mid=r.mid where stars in (select max(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable) group by title;
-
-select title,max(avgstars) from movie m join rating r on m.mid=r.mid where stars in(select avg(stars) as avgstars from rating group by mid)group by title;
+mysql> select title,avg(stars) as average from movie m join rating r on m.mid=r.mid group by title order by average desc limit 1;
++------------+---------+
+| title      | average |
++------------+---------+
+| Snow White |  4.5000 |
++------------+---------+
+1 row in set (0.08 sec)
 
 20. Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
@@ -457,14 +461,26 @@ mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid where s
 
 21. For each director, return the director's name together with the title(s) of the movie(s) they directed that received the highest rating among all of their movies, and the value of that rating. Ignore movies whose director is NULL. (1 point possible)
 
-mysql> select director,title,max(stars) from movie m join rating r on m.mid=r.mid where stars in (select max(stars) from rating r join movie m on r.mid=m.mid group by director) group by director;
+mysql> select director,title,max(stars) from movie m join rating r on m.mid=r.mid where stars in (select max(stars) from rating r join movie m on r.mid=m.mid group by director) and director is not null group by title order by director;
 +------------------+-------------------------+------------+
 | director         | title                   | max(stars) |
 +------------------+-------------------------+------------+
-| Victor Fleming   | Gone with the Wind      |          4 |
-| NULL             | Snow White              |          5 |
-| Steven Spielberg | Raiders of the Lost Ark |          4 |
-| Robert Wise      | The Sound of Music      |          3 |
 | James Cameron    | Avatar                  |          5 |
+| Robert Wise      | The Sound of Music      |          3 |
+| Steven Spielberg | E.T.                    |          3 |
+| Steven Spielberg | Raiders of the Lost Ark |          4 |
+| Victor Fleming   | Gone with the Wind      |          4 |
 +------------------+-------------------------+------------+
+5 rows in set (0.00 sec)
+
+mysql> (select title,director,max(stars) from rating r join movie m on r.mid=m.mid where director is not null group by title order by director);
++-------------------------+------------------+------------+
+| title                   | director         | max(stars) |
++-------------------------+------------------+------------+
+| Avatar                  | James Cameron    |          5 |
+| The Sound of Music      | Robert Wise      |          3 |
+| E.T.                    | Steven Spielberg |          3 |
+| Raiders of the Lost Ark | Steven Spielberg |          4 |
+| Gone with the Wind      | Victor Fleming   |          4 |
++-------------------------+------------------+------------+
 5 rows in set (0.00 sec)
