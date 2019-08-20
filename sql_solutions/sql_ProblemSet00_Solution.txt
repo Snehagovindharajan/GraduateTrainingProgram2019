@@ -21,6 +21,8 @@ insert into employee values('A194', 'HAROLLD STEVENS', 'D02', 32166, 'A187');
 insert into employee values('A133', 'STEVE MICHELOS', 'D02', 61215, 'A187'); 
 insert into employee values('A156', 'NICK MARTIN', 'D03',50174, 'A178');
 
+insert into employee values('A141', 'TARA', 'D04', 99475, 'A187'); 
+
 mysql> select * from employee;
 +------+-----------------+--------+--------+-----------+
 | e_id | name            | dep_id | salary | managerid |
@@ -69,7 +71,7 @@ mysql> select * from dept;
 5 rows in set (1.55 sec)
 
 
-1)Select the Employee with the top three salaries
+1)Select the Employee with the top three salaries (doubt)
 
 mysql> select * from employee order by salary desc limit 3;
 +------+---------------+--------+--------+-----------+
@@ -99,7 +101,7 @@ Empty set (0.00 sec)
 
 4)Select the Employee who is also a Manager	
 
-mysql> select distinct e.name from employee e join employee e1 on e.e_id=e1.managerid;
+mysql> select distinct e.name from employee e,employee e1 where e.e_id=e1.managerid;
 +-----------------+
 | name            |
 +-----------------+
@@ -109,7 +111,7 @@ mysql> select distinct e.name from employee e join employee e1 on e.e_id=e1.mana
 | NATASHA STEVENS |
 | BRUCE WILLS     |
 +-----------------+
-5 rows in set (0.00 sec)			
+5 rows in set (0.00 sec)	
 
 5)Select the Empolyee who is a Manager and has least salary	
 
@@ -230,7 +232,7 @@ mysql> select d.dept_id,e.e_id,e.managerid from employee e join dept d on e.dep_
 
 13)Select the Average Expenses for Each dept with Dept id and Dept name	
 
-mysql> select d.dep_name,d.dept_id,avg(e.salary) from employee e join dept d on e.dep_id = d.dept_id group by d.dep_name,d.dep_name;
+mysql> select d.dep_name,d.dept_id,avg(e.salary) from employee e join dept d on e.dep_id = d.dept_id group by d.dep_name;
 +----------------+---------+---------------+
 | dep_name       | dept_id | avg(e.salary) |
 +----------------+---------+---------------+
@@ -244,7 +246,7 @@ mysql> select d.dep_name,d.dept_id,avg(e.salary) from employee e join dept d on 
 
 14)Select the total expense for the department finance		
 
-mysql> select d.dep_name,d.dept_id,sum(e.salary) from employee e join dept d on e.dep_id = d.dept_id where d.dep_name='FINANCE' group by d.dep_name,d.dep_name;
+mysql> select d.dep_name,d.dept_id,sum(e.salary) from employee e join dept d on e.dep_id = d.dept_id where d.dep_name='FINANCE' group by d.dep_name;
 +----------+---------+---------------+
 | dep_name | dept_id | sum(e.salary) |
 +----------+---------+---------------+
@@ -254,13 +256,13 @@ mysql> select d.dep_name,d.dept_id,sum(e.salary) from employee e join dept d on 
 
 15)Select the department which spends the least with Dept id and Dept manager name
 
-mysql> select d.dep_name,d.dep_manager,d.dept_id,sum(e.salary) as count from employee e join dept d on e.dep_id=d.dept_id group by d.dep_name having sum(e.salary)=(select min(mysum) from (select sum(e.salary) as mysum from employee e join dept d on e.dep_id=d.dept_id group by d.dep_name) as sum);
+mysql> select d.dep_name,d.dep_manager,d.dept_id,sum(e.salary) as count from employee e join dept d on e.dep_id=d.dept_id group by d.dep_name having sum(e.salary)=(select min(mysum) from (select sum(e.salary) as mysum from employee e group by e.dep_id) as sum);
 +----------+-------------+---------+--------+
 | dep_name | dep_manager | dept_id | count  |
 +----------+-------------+---------+--------+
 | PRODUCT  | BRUCE WILLS | D03     | 117035 |
 +----------+-------------+---------+--------+
-1 row in set (1.09 sec)
+1 row in set (0.00 sec)
 
 16)Select the count of Employees in each department	
 

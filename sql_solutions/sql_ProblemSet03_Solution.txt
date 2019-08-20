@@ -193,8 +193,6 @@ mysql> select name,title,stars,rating_date from movie m join rating r on m.mid=r
 
 6. For all cases where the same reviewer rated the same movie twice and gave it a higher rating the second time, return the reviewer's name and the title of the movie. (1 point possible) (doubt)
 
-mysql> select name,view.rid as rate from reviewer view join rating r on r.rid=view.rid group by view.name having count(r.mid) > 1 and avg(r.mid)=r.mid;
-ERROR 1054 (42S22): Unknown column 'r.mid' in 'having clause'
 mysql> select name,view.rid from reviewer view join rating r on r.rid=view.rid group by view.name having count(r.mid) = 2 and avg(r.mid)=101;
 +----------------+-----+
 | name           | rid |
@@ -254,7 +252,7 @@ mysql> select m.title,(max(stars)-min(stars)) as ratingspeed from rating view jo
 
 9. Find the difference between the average rating of movies released before 1980 and the average rating of movies released after 1980. (Make sure to calculate the average rating for each movie, then the average of those averages for movies before 1980 and movies after. Don't just calculate the overall average rating before and after 1980.) (1 point possible) (doubt)
 
-mysql> select avg(mystar) from (select m.title,avg(stars) as mystar from rating r join movie m on m.mid=r.mid where year < 1980 group by r.mid) as myavg1;
+mysql> (select avg(mystar) average from (select m.title,avg(stars) as mystar from rating r join movie m on m.mid=r.mid where year < 1980 group by r.mid) as myavg1);
 +-------------+
 | avg(mystar) |
 +-------------+
@@ -262,12 +260,20 @@ mysql> select avg(mystar) from (select m.title,avg(stars) as mystar from rating 
 +-------------+
 1 row in set (0.00 sec)
 
-mysql> select avg(mystars) as after from (select m.title,avg(stars) as mystars from rating r join movie m on m.mid=r.mid where year > 1980 group by r.mid) as myavg2;
+mysql> select avg(mystars) from (select m.title,avg(stars) as mystars from rating r join movie m on m.mid=r.mid where year > 1980 group by r.mid) as myavg2;
 +--------------+
 | avg(mystars) |
 +--------------+
 |   3.27776667 |
 +--------------+
+1 row in set (0.00 sec)
+
+mysql> select answer.max-answer1.min from ((select avg(mystar) max from (select m.title,avg(stars) as mystar from rating r join movie m on m.mid=r.mid where year < 1980 group by r.mid) as myavg1) as answer , (select avg(mystars) min from (select m.title,avg(stars) as mystars from rating r join movie m on m.mid=r.mid where year > 1980 group by r.mid) as myavg2) as answer1);
++------------------------+
+| answer.max-answer1.min |
++------------------------+
+|             0.05556666 |
++------------------------+
 1 row in set (0.00 sec)
 
 10. Find the names of all reviewers who rated Gone with the Wind. (1 point possible)
@@ -447,17 +453,35 @@ mysql> select title from movie group by director having count(mid)>1;
 
 19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
-mysql> select title,avg(stars) as average from movie m join rating r on m.mid=r.mid group by title order by average desc limit 1;
-+------------+---------+
-| title      | average |
-+------------+---------+
-| Snow White |  4.5000 |
-+------------+---------+
-1 row in set (0.08 sec)
+mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid group by title having avg(stars) in (select max(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
++-------------------------+------------+
+| title                   | avg(stars) |
++-------------------------+------------+
+| Gone with the Wind      |     3.0000 |
+| Snow White              |     4.5000 |
+| The Sound of Music      |     2.5000 |
+| Raiders of the Lost Ark |     3.3333 |
+| E.T.                    |     2.5000 |
+| Avatar                  |     4.0000 |
++-------------------------+------------+
+6 rows in set (0.00 sec)
 
 20. Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
-mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid where stars in (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable) group by title;
+mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid having avg(stars) in (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable) group by title;
+
+mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid  group by title having avg(stars) in (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
++-------------------------+------------+
+| title                   | avg(stars) |
++-------------------------+------------+
+| Gone with the Wind      |     3.0000 |
+| The Sound of Music      |     2.5000 |
+| E.T.                    |     2.5000 |
+| Snow White              |     4.5000 |
+| Avatar                  |     4.0000 |
+| Raiders of the Lost Ark |     3.3333 |
++-------------------------+------------+
+6 rows in set (0.20 sec)
 
 21. For each director, return the director's name together with the title(s) of the movie(s) they directed that received the highest rating among all of their movies, and the value of that rating. Ignore movies whose director is NULL. (1 point possible)
 
