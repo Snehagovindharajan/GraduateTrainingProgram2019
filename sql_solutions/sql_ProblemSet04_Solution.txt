@@ -246,16 +246,17 @@ mysql> select name,grade from highschooler where id not in ( select id1 from lik
 
 5. For every situation where student A likes student B, but we have no information about whom B likes (that is, B does not appear as an ID1 in the Likes table), return A and B's names and grades. (1 point possible)
 
-mysql> (select a.id2 from likes a where a.id2 not in (select b.id1 from likes b));
-+------+
-| id2  |
-+------+
-| 1101 |
-| 1304 |
-| 1468 |
-| 1468 |
-+------+
-4 rows in set (0.00 sec)
+mysql> select distinct name,grade from highschooler where id in (select a.id2 from likes a where a.id2 not in (select b.id1 from likes b));
++--------+-------+
+| name   | grade |
++--------+-------+
+| Haley  |    10 |
+| Jordan |    12 |
+| Kris   |    10 |
++--------+-------+
+3 rows in set (0.30 sec)
+
+select a.id2 from likes a , likes b where a.id2 not in b.id1;
 
 6. Find names and grades of students who only have friends in the same grade. Return the result sorted by grade, then by name within each grade. (1 point possible)
 
