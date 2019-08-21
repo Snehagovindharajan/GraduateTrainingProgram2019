@@ -193,32 +193,13 @@ mysql> select name,title,stars,rating_date from movie m join rating r on m.mid=r
 
 6. For all cases where the same reviewer rated the same movie twice and gave it a higher rating the second time, return the reviewer's name and the title of the movie. (1 point possible) (doubt)
 
-mysql> select name,view.rid from reviewer view join rating r on r.rid=view.rid group by view.name having count(r.mid) = 2 and avg(r.mid)=101;
-+----------------+-----+
-| name           | rid |
-+----------------+-----+
-| Sarah Martinez | 201 |
-+----------------+-----+
+mysql> select name,title from rating r1 join rating r2 on r1.rid=r2.rid and r1.mid=r2.mid join reviewer view on r1.rid=view.rid join movie m on m.mid=r1.mid where r1.stars<r2.stars and r1.rating_date<r2.rating_date;
++----------------+--------------------+
+| name           | title              |
++----------------+--------------------+
+| Sarah Martinez | Gone with the Wind |
++----------------+--------------------+
 1 row in set (0.00 sec)
-
-mysql> select name,view.rid from reviewer view join rating r on r.rid=view.rid join rating r1 on r.rid=r1.rid where r.stars >r1.stars group by view.name having count(r.mid) = 2 and avg(r.mid)=101;
-Empty set (0.00 sec)
-
-mysql> select name,view.rid from reviewer view join rating r on r.rid=view.rid join rating r1 on r.rid=r1.rid where r.stars >r1.stars ;
-+------------------+-----+
-| name             | rid |
-+------------------+-----+
-| Sarah Martinez   | 201 |
-| Brittany Harris  | 203 |
-| Brittany Harris  | 203 |
-| Chris Jackson    | 205 |
-| Chris Jackson    | 205 |
-| Chris Jackson    | 205 |
-| Elizabeth Thomas | 206 |
-+------------------+-----+
-7 rows in set (0.00 sec)
-
-
 
 7. For each movie that has at least one rating, find the highest number of stars that movie received. Return the movie title and number of stars. Sort by movie title. (1 point possible)
 
@@ -453,35 +434,24 @@ mysql> select title from movie group by director having count(mid)>1;
 
 19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
-mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid group by title having avg(stars) in (select max(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
-+-------------------------+------------+
-| title                   | avg(stars) |
-+-------------------------+------------+
-| Gone with the Wind      |     3.0000 |
-| Snow White              |     4.5000 |
-| The Sound of Music      |     2.5000 |
-| Raiders of the Lost Ark |     3.3333 |
-| E.T.                    |     2.5000 |
-| Avatar                  |     4.0000 |
-+-------------------------+------------+
-6 rows in set (0.00 sec)
+mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid group by title having avg(stars) = (select max(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
++------------+------------+
+| title      | avg(stars) |
++------------+------------+
+| Snow White |     4.5000 |
++------------+------------+
+1 row in set (0.16 sec)
 
 20. Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
-mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid having avg(stars) in (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable) group by title;
-
-mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid  group by title having avg(stars) in (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
-+-------------------------+------------+
-| title                   | avg(stars) |
-+-------------------------+------------+
-| Gone with the Wind      |     3.0000 |
-| The Sound of Music      |     2.5000 |
-| E.T.                    |     2.5000 |
-| Snow White              |     4.5000 |
-| Avatar                  |     4.0000 |
-| Raiders of the Lost Ark |     3.3333 |
-+-------------------------+------------+
-6 rows in set (0.20 sec)
+mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid  group by title having avg(stars) = (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
++--------------------+------------+
+| title              | avg(stars) |
++--------------------+------------+
+| The Sound of Music |     2.5000 |
+| E.T.               |     2.5000 |
++--------------------+------------+
+2 rows in set (0.00 sec)
 
 21. For each director, return the director's name together with the title(s) of the movie(s) they directed that received the highest rating among all of their movies, and the value of that rating. Ignore movies whose director is NULL. (1 point possible)
 
