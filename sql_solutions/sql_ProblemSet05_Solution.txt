@@ -5,13 +5,13 @@ create table place(place_no int primary key, place_town varchar(20), place_count
 
 create table performer(perf_no int primary key, perf_is int, instrument varchar(20), perf_type varchar(20)); //perf_is is m_no
 
-create table composer(comp_no int primary key, comp_is int, comp_type varchar(20)); //comp_no is m_no comp_is??
+create table composer(comp_no int primary key, comp_is int, comp_type varchar(20)); //comp_no  comp_is is m_no
 
 create table band(band_no int primary key, band_name varchar(20), band_home int, band_type varchar(20), b_date varchar(20), band_contact varchar(20));
 
 create table plays_in(player int, band_id int); //band_no in band and player is m_no players in the band
 
-create table composition(c_no int primary key, comp_date varchar(20), c_title varchar(30), c_in int);// c_in???
+create table composition(c_no int primary key, comp_date varchar(20), c_title varchar(30), c_in int);// c_in can be composer no???
 
 create table has_composed(cmpr_no int, cmpn_no int); //cmpr_no is comp_no cmpn_no is c_no
 
@@ -297,8 +297,33 @@ mysql> select instrument,count(perf_no) from performer group by instrument;
 7. List the name and the number of players for the band whose number of players is greater than the average number of players in each band. (1 point possible)
 8. List the names of musicians who both conduct and compose and live in Britain. (1 point possible)
 9. Show the least commonly played instrument and the number of musicians who play it. (1 point possible)
+
+mysql> select instrument,count(perf_no) from performer group by instrument having count(perf_no) = (select min(ins_count) from (select count(perf_no) as ins_count from performer group by instrument) as min_ins);
++------------+----------------+
+| instrument | count(perf_no) |
++------------+----------------+
+| banjo      |              1 |
+| trumpet    |              1 |
+| cornet     |              1 |
+| trombone   |              1 |
+| horn       |              1 |
+| clarinet   |              1 |
++------------+----------------+
+6 rows in set (0.00 sec)
+
 10. List the bands that have played music composed by Sue Little; Give the titles of the composition in each case. (1 point possible)
 11. List the name and town of birth of any performer born in the same city as James First.(1 point possible)
+
+mysql> select distinct m_name from musician m join performer p on perf_is=m_no join place on born_in=place_no where place_country in (select place_country from place join musician on born_in=place_no where lower(m_name)='james first') and place_town in (select place_town from place join musician on born_in=place_no where lower(m_name)='james first');
++-------------+
+| m_name      |
++-------------+
+| Theo Mengel |
+| Alan Fluff  |
+| James First |
++-------------+
+3 rows in set (0.00 sec)
+
 12. Create a list showing for EVERY musician born in Britain the number of compositions and the number of instruments played. (1 point possible)
 13. Give the band name, conductor and contact of the bands performing at the most recent concert in the Royal Albert Hall. (1 point possible)
 14. Give a list of musicians associated with Glasgow. Include the name of the musician and the nature of the association - one or more of 'LIVES_IN', 'BORN_IN', 'PERFORMED_IN' AND 'IN_BAND_IN'. (1 point possible)
