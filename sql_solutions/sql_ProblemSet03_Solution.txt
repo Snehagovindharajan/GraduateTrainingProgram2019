@@ -423,14 +423,16 @@ Empty set (0.00 sec)
 
 18. Some directors directed more than one movie. For all such directors, return the titles of all movies directed by them, along with the director name. Sort by director name, then movie title. (As an extra challenge, try writing the query both with and without COUNT.) (1 point possible)
 
-mysql> select title from movie group by director having count(mid)>1;
-+---------+
-| title   |
-+---------+
-| E.T.    |
-| Titanic |
-+---------+
-2 rows in set (0.00 sec)
+mysql> select m.director,m.title from movie m join movie m1 on m.director=m1.director group by m.mid having count(m.mid)>1 order by m.director,m.title;
++------------------+-------------------------+
+| director         | title                   |
++------------------+-------------------------+
+| James Cameron    | Avatar                  |
+| James Cameron    | Titanic                 |
+| Steven Spielberg | E.T.                    |
+| Steven Spielberg | Raiders of the Lost Ark |
++------------------+-------------------------+
+4 rows in set (0.00 sec)
 
 19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
 
