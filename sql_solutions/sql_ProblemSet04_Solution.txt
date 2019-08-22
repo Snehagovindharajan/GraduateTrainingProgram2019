@@ -268,38 +268,38 @@ select a.id2 from likes a , likes b where a.id2 not in b.id1;
 
 6. Find names and grades of students who only have friends in the same grade. Return the result sorted by grade, then by name within each grade. (1 point possible)(confirm)
 
-mysql> select x.id1,count(x.grade),x.grade from (select l.id1,l.id2,h.grade from likes l join highschooler h on h.id=l.id1 or h.id=l.id2) as x group by x.id1,x.grade having count(x.grade)>=2;
-+------+----------------+-------+
-| id1  | count(x.grade) | grade |
-+------+----------------+-------+
-| 1689 |              2 |     9 |
-| 1709 |              2 |     9 |
-| 1911 |              2 |    11 |
-| 1641 |              2 |    10 |
-+------+----------------+-------+
-4 rows in set (0.00 sec)
-
-mysql> select h1.name,h1.grade,h2.name,h2.grade from likes l join highschooler h1 on id1=h1.id join highschooler h2 on id2=h2.id where (h1.grade-h2.grade)=0;
+mysql> select h1.name,h1.grade,h2.name,h2.grade from friend f1 join highschooler h1 on f1.id1=h1.id join highschooler h2 on f1.id2=h2.id where h1.grade=h2.grade;
 +-----------+-------+-----------+-------+
 | name      | grade | name      | grade |
 +-----------+-------+-----------+-------+
-| Gabriel   |     9 | Cassandra |     9 |
-| Cassandra |     9 | Gabriel   |     9 |
+| Logan     |    12 | John      |    12 |
+| Kris      |    10 | Haley     |    10 |
+| Brittany  |    10 | Haley     |    10 |
 | Gabriel   |    11 | Alexis    |    11 |
+| Jessica   |    11 | Alexis    |    11 |
+| Kyle      |    12 | Jordan    |    12 |
+| Logan     |    12 | Jordan    |    12 |
+| Jordan    |     9 | Tiffany   |     9 |
+| Andrew    |    10 | Kris      |    10 |
+| Haley     |    10 | Kris      |    10 |
 | Brittany  |    10 | Kris      |    10 |
-+-----------+-------+-----------+-------+
-4 rows in set (0.00 sec)
-
-mysql> select h1.name,h1.grade,h2.name,h2.grade from likes l join highschooler h1 on id1=h1.id join highschooler h2 on id2=h2.id where h1.grade=h2.grade;
-+-----------+-------+-----------+-------+
-| name      | grade | name      | grade |
-+-----------+-------+-----------+-------+
-| Gabriel   |     9 | Cassandra |     9 |
+| Alexis    |    11 | Jessica   |    11 |
+| Gabriel   |    11 | Jessica   |    11 |
+| Tiffany   |     9 | Jordan    |     9 |
+| Gabriel   |     9 | Jordan    |     9 |
+| Kris      |    10 | Brittany  |    10 |
+| Haley     |    10 | Brittany  |    10 |
+| Jordan    |    12 | Logan     |    12 |
+| John      |    12 | Logan     |    12 |
+| Jordan    |     9 | Gabriel   |     9 |
 | Cassandra |     9 | Gabriel   |     9 |
-| Gabriel   |    11 | Alexis    |    11 |
-| Brittany  |    10 | Kris      |    10 |
+| Gabriel   |     9 | Cassandra |     9 |
+| Kris      |    10 | Andrew    |    10 |
+| Alexis    |    11 | Gabriel   |    11 |
+| Jessica   |    11 | Gabriel   |    11 |
+| Jordan    |    12 | Kyle      |    12 |
 +-----------+-------+-----------+-------+
-4 rows in set (0.00 sec)
+26 rows in set (0.00 sec)
 
 7. For each student A who likes a student B where the two are not friends, find if they have a friend C in common (who can introduce them!). For all such trios, return the name and grade of A, B, and C. (1 point possible)
 
@@ -328,6 +328,28 @@ mysql> select name,grade from highschooler where id in (select id2 from likes gr
 10. For every situation where student A likes student B, but student B likes a different student C, return the names and grades of A, B, and C. (1 point possible)
 
 11. Find those students for whom all of their friends are in different grades from themselves. Return the students' names and grades.(1 point possible)
+
+mysql> select h1.name,h1.grade,h2.name,h2.grade from friend f1 join highschooler h1 on f1.id1=h1.id join highschooler h2 on f1.id2=h2.id where h1.grade!=h2.grade;
++-----------+-------+-----------+-------+
+| name      | grade | name      | grade |
++-----------+-------+-----------+-------+
+| Tiffany   |     9 | Alexis    |    11 |
+| Cassandra |     9 | Alexis    |    11 |
+| Andrew    |    10 | Jordan    |    12 |
+| Andrew    |    10 | Austin    |    11 |
+| Kyle      |    12 | Austin    |    11 |
+| Alexis    |    11 | Tiffany   |     9 |
+| Kyle      |    12 | Jessica   |    11 |
+| Andrew    |    10 | Gabriel   |     9 |
+| Alexis    |    11 | Cassandra |     9 |
+| Gabriel   |     9 | Andrew    |    10 |
+| Austin    |    11 | Andrew    |    10 |
+| Jordan    |    12 | Andrew    |    10 |
+| Jessica   |    11 | Kyle      |    12 |
+| Austin    |    11 | Kyle      |    12 |
++-----------+-------+-----------+-------+
+14 rows in set (0.00 sec)
+
 
 12. What is the average number of friends per student? (Your result should be just one number.) (1 point possible)
 
