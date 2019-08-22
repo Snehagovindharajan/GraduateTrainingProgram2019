@@ -7,7 +7,7 @@ create table performer(perf_no int primary key, perf_is int, instrument varchar(
 
 create table composer(comp_no int primary key, comp_is int, comp_type varchar(20)); //comp_no  comp_is is m_no
 
-create table band(band_no int primary key, band_name varchar(20), band_home int, band_type varchar(20), b_date varchar(20), band_contact varchar(20));
+create table band(band_no int primary key, band_name varchar(20), band_home int, band_type varchar(20), b_date varchar(20), band_contact varchar(20)); // band_home is place_no and band_contact is m_no
 
 create table plays_in(player int, band_id int); //band_no in band and player is m_no players in the band
 
@@ -255,9 +255,18 @@ mysql> select m_name,place_town,con_date from musician m join concert c on m_no=
 
 4. How many concerts have featured at least one composition by Andy Jones? List concert date, venue and the composition's title. (1 point possible)
 
+mysql> select c_title,concert_venue,con_date from musician join composer on m_no=comp_is join has_composed on comp_no=cmpr_no join composition on c_no=cmpn_no join performance p on c_no=performed join concert on performed_in=concert_no where m_name='Andy Jones';
++----------------+---------------+------------+
+| c_title        | concert_venue | con_date   |
++----------------+---------------+------------+
+| A Simple Piece | Metropolitan  | 1997-01-15 |
++----------------+---------------+------------+
+1 row in set (0.00 sec)
+
+
 5. List the different instruments played by the musicians and avg number of musicians who play the instrument. (1 point possible)
 
-mysql> select instrument,count(perf_no) from performer group by instrument;
+mysql> select instrument,count(perf_no) as count from performer group by instrument;
 +------------+----------------+
 | instrument | count(perf_no) |
 +------------+----------------+
@@ -275,6 +284,26 @@ mysql> select instrument,count(perf_no) from performer group by instrument;
 | horn       |              1 |
 | clarinet   |              1 |
 +------------+----------------+
+13 rows in set (0.00 sec)
+
+mysql> select outerquery.instrument,avg(count) from (select instrument,count(perf_no) as count from performer group by instrument) as outerquery group by outerquery.instrument;
++------------+------------+
+| instrument | avg(count) |
++------------+------------+
+| violin     |     7.0000 |
+| viola      |     4.0000 |
+| banjo      |     1.0000 |
+| guitar     |     2.0000 |
+| trumpet    |     1.0000 |
+| bass       |     3.0000 |
+| flute      |     2.0000 |
+| cornet     |     1.0000 |
+| drums      |     2.0000 |
+| cello      |     3.0000 |
+| trombone   |     1.0000 |
+| horn       |     1.0000 |
+| clarinet   |     1.0000 |
++------------+------------+
 13 rows in set (0.00 sec)
 
 6. List the names, dates of birth and the instrument played of living musicians who play a instrument which Theo also plays. (1 point possible)
@@ -305,6 +334,10 @@ mysql> select band_name from (select band_name,count(player)>avg(player) as resu
 1 row in set (0.00 sec)
 
 8. List the names of musicians who both conduct and compose and live in Britain. (1 point possible)
+
+mysql> select distinct m_name from composer c join concert c1 on comp_is=concert_orgniser join musician m on comp_is=m_no join place p on living_in=place_no where lower(place_country)='britain';
+Empty set (0.00 sec)
+
 9. Show the least commonly played instrument and the number of musicians who play it. (1 point possible)
 
 mysql> select instrument,count(perf_no) from performer group by instrument having count(perf_no) = (select min(ins_count) from (select count(perf_no) as ins_count from performer group by instrument) as min_ins);
@@ -323,18 +356,49 @@ mysql> select instrument,count(perf_no) from performer group by instrument havin
 10. List the bands that have played music composed by Sue Little; Give the titles of the composition in each case. (1 point possible)
 11. List the name and town of birth of any performer born in the same city as James First.(1 point possible)
 
-mysql> select distinct m_name from musician m join performer p on perf_is=m_no join place on born_in=place_no where place_country in (select place_country from place join musician on born_in=place_no where lower(m_name)='james first') and place_town in (select place_town from place join musician on born_in=place_no where lower(m_name)='james first');
-+-------------+
-| m_name      |
-+-------------+
-| Theo Mengel |
-| Alan Fluff  |
-| James First |
-+-------------+
+mysql> select c_title,band_name from musician m join composer c on m_no=comp_is join has_composed hc on comp_no=cmpr_no join composition c1 on c_no=cmpn_no join performance p on c_no=performed join band b on band_no=gave where m_name='Sue Little' order by band_name,c_title;
++-----------------------+---------------------+
+| c_title               | band_name           |
++-----------------------+---------------------+
+| Slow Song             | BBSO                |
+| Slow Symphony Blowing | BBSO                |
+| Slow Symphony Blowing | Somebody Loves this |
+| Slow Song             | Swinging strings    |
+| Slow Song             | The left Overs      |
++-----------------------+---------------------+
+5 rows in set (0.00 sec)
+
+mysql> select distinct m_name,place_town from musician m join performer p on m_no=perf_is join place p1 on born_in=place_no where place_town in (select place_town from place p join musician m on born_in=place_no where m_name='James First');
++-------------+------------+
+| m_name      | place_town |
++-------------+------------+
+| Theo Mengel | London     |
+| Alan Fluff  | London     |
+| James First | London     |
++-------------+------------+
+3 rows in set (0.00 sec)
+
+mysql> select distinct m_name,place_town from musician m join performer p on m_no=perf_is join place p1 on born_in=place_no where place_town='London';
++-------------+------------+
+| m_name      | place_town |
++-------------+------------+
+| Theo Mengel | London     |
+| Alan Fluff  | London     |
+| James First | London     |
++-------------+------------+
 3 rows in set (0.00 sec)
 
 12. Create a list showing for EVERY musician born in Britain the number of compositions and the number of instruments played. (1 point possible)
 13. Give the band name, conductor and contact of the bands performing at the most recent concert in the Royal Albert Hall. (1 point possible)
+
+mysql> select band_name,band_contact,m.m_name,conducted_by,m1.m_name from band b join performance p on band_no=gave join concert c on concert_no=performed_in join musician m on m.m_no=band_contact join musician m1 on m1.m_no=conducted_by where concert_venue='Royal Albert Hall';
++---------------------+--------------+-------------+--------------+------------+
+| band_name           | band_contact | m_name      | conducted_by | m_name     |
++---------------------+--------------+-------------+--------------+------------+
+| Somebody Loves this | 6            | Theo Mengel |           14 | Alan Fluff |
++---------------------+--------------+-------------+--------------+------------+
+1 row in set (0.00 sec)
+
 14. Give a list of musicians associated with Glasgow. Include the name of the musician and the nature of the association - one or more of 'LIVES_IN', 'BORN_IN', 'PERFORMED_IN' AND 'IN_BAND_IN'. (1 point possible)
 15. Jeff Dawn plays in a band with someone who plays in a band with Sue Little. Who is it and what are the bands? (1 point possible)
 
