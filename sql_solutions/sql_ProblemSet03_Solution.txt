@@ -191,7 +191,7 @@ mysql> select name,title,stars,rating_date from movie m join rating r on m.mid=r
 14 rows in set (0.00 sec)
 
 
-6. For all cases where the same reviewer rated the same movie twice and gave it a higher rating the second time, return the reviewer's name and the title of the movie. (1 point possible) (doubt)
+6. For all cases where the same reviewer rated the same movie twice and gave it a higher rating the second time, return the reviewer's name and the title of the movie. (1 point possible)  
 
 mysql> select name,title from rating r1 join rating r2 on r1.rid=r2.rid and r1.mid=r2.mid join reviewer view on r1.rid=view.rid join movie m on m.mid=r1.mid where r1.stars<r2.stars and r1.rating_date<r2.rating_date;
 +----------------+--------------------+
@@ -231,7 +231,7 @@ mysql> select m.title,(max(stars)-min(stars)) as ratingspeed from rating view jo
 +-------------------------+-------------+
 6 rows in set (0.00 sec)
 
-9. Find the difference between the average rating of movies released before 1980 and the average rating of movies released after 1980. (Make sure to calculate the average rating for each movie, then the average of those averages for movies before 1980 and movies after. Don't just calculate the overall average rating before and after 1980.) (1 point possible) (doubt)
+9. Find the difference between the average rating of movies released before 1980 and the average rating of movies released after 1980. (Make sure to calculate the average rating for each movie, then the average of those averages for movies before 1980 and movies after. Don't just calculate the overall average rating before and after 1980.) (1 point possible)  
 
 mysql> (select avg(mystar) average from (select m.title,avg(stars) as mystar from rating r join movie m on m.mid=r.mid where year < 1980 group by r.mid) as myavg1);
 +-------------+
@@ -278,7 +278,7 @@ mysql> select view.name from reviewer view join rating r on view.rid=r.rid join 
 +---------------+
 1 row in set (0.00 sec)
 
-12. Return all reviewer names and movie names together in a single list, alphabetized. (Sorting by the first name of the reviewer and first word in the title is fine; no need for special processing on last names or removing "The".) (1 point possible) (doubt)
+12. Return all reviewer names and movie names together in a single list, alphabetized. (Sorting by the first name of the reviewer and first word in the title is fine; no need for special processing on last names or removing "The".) (1 point possible)  
 
 mysql> select name,title from reviewer,movie order by name,title;
 +------------------+-------------------------+
@@ -434,7 +434,7 @@ mysql> select m.director,m.title from movie m join movie m1 on m.director=m1.dir
 +------------------+-------------------------+
 4 rows in set (0.00 sec)
 
-19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
+19. Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.) (1 point possible)  
 
 mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid group by title having avg(stars) = (select max(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
 +------------+------------+
@@ -444,7 +444,7 @@ mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid group b
 +------------+------------+
 1 row in set (0.16 sec)
 
-20. Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.) (1 point possible) (doubt)
+20. Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.) (1 point possible)  
 
 mysql> select title,avg(stars) from movie m join rating r on m.mid=r.mid  group by title having avg(stars) = (select min(avgstars) from (select avg(stars) as avgstars from rating group by mid) as avgtable);
 +--------------------+------------+

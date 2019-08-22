@@ -325,13 +325,15 @@ mysql> select outerquery.instrument,avg(count) from (select instrument,count(per
 
 7. List the name and the number of players for the band whose number of players is greater than the average number of players in each band. (1 point possible)
 
-mysql> select band_name from (select band_name,count(player)>avg(player) as result from band b join plays_in p on band_no=band_id group by band_name) as band_count where result = 1;
+mysql> select band_name from ((select band_name,count(player) count_band from band join plays_in on band_no=band_id group by band_name) as table_band, (select avg(player_count) as average from (select count(player) as player_count from plays_in group by band_id) as band_table)as avg_table) where table_band.count_band > avg_table.average;
 +-----------+
 | band_name |
 +-----------+
 | ROP       |
+| Oh well   |
+| AASO      |
 +-----------+
-1 row in set (0.00 sec)
+3 rows in set (0.02 sec)
 
 8. List the names of musicians who both conduct and compose and live in Britain. (1 point possible)
 
@@ -354,7 +356,6 @@ mysql> select instrument,count(perf_no) from performer group by instrument havin
 6 rows in set (0.00 sec)
 
 10. List the bands that have played music composed by Sue Little; Give the titles of the composition in each case. (1 point possible)
-11. List the name and town of birth of any performer born in the same city as James First.(1 point possible)
 
 mysql> select c_title,band_name from musician m join composer c on m_no=comp_is join has_composed hc on comp_no=cmpr_no join composition c1 on c_no=cmpn_no join performance p on c_no=performed join band b on band_no=gave where m_name='Sue Little' order by band_name,c_title;
 +-----------------------+---------------------+
@@ -367,6 +368,8 @@ mysql> select c_title,band_name from musician m join composer c on m_no=comp_is 
 | Slow Song             | The left Overs      |
 +-----------------------+---------------------+
 5 rows in set (0.00 sec)
+
+11. List the name and town of birth of any performer born in the same city as James First.(1 point possible)
 
 mysql> select distinct m_name,place_town from musician m join performer p on m_no=perf_is join place p1 on born_in=place_no where place_town in (select place_town from place p join musician m on born_in=place_no where m_name='James First');
 +-------------+------------+
@@ -389,6 +392,16 @@ mysql> select distinct m_name,place_town from musician m join performer p on m_n
 3 rows in set (0.00 sec)
 
 12. Create a list showing for EVERY musician born in Britain the number of compositions and the number of instruments played. (1 point possible)
+
+mysql> select m_name,instrument,count(p.instrument),c_no,count(c_no) from musician m join performer p on m_no=perf_is join composer c on m_no=comp_is join has_composed on comp_no=cmpr_no join composition c2 on c_no=cmpn_no join place p1 on born_in=place_no where place_country='england' group by m_name;
++-------------+------------+---------------------+------+-------------+
+| m_name      | instrument | count(p.instrument) | c_no | count(c_no) |
++-------------+------------+---------------------+------+-------------+
+| James First | violin     |                   4 |    2 |           4 |
+| Harry Forte | violin     |                   6 |    7 |           6 |
++-------------+------------+---------------------+------+-------------+
+2 rows in set (0.00 sec)
+
 13. Give the band name, conductor and contact of the bands performing at the most recent concert in the Royal Albert Hall. (1 point possible)
 
 mysql> select band_name,band_contact,m.m_name,conducted_by,m1.m_name from band b join performance p on band_no=gave join concert c on concert_no=performed_in join musician m on m.m_no=band_contact join musician m1 on m1.m_no=conducted_by where concert_venue='Royal Albert Hall';
