@@ -410,19 +410,11 @@ mysql> select count(f1.id2) as cassandra_friends from friend f1 join highschoole
 
 14. Find the name and grade of the student(s) with the greatest number of friends. (1 point possible)
 
-mysql> select name,grade,count(f.id1) from highschooler h join friend f on h.id=f.id1 group by id2 having count(id)= ( (select max(count) from (select count(id1) as count from friend group by id2)as maxcount));
-+------------+
-| max(count) |
-+------------+
-|          4 |
-+------------+
-1 row in set (0.00 sec)
-
-mysql> select name,grade,count(f.id1) from highschooler h join friend f on h.id=f.id1 group by id2 having count(id)= ( (select max(count) from (select count(id1) as count from friend group by id2)as maxcount));
-+---------+-------+--------------+
-| name    | grade | count(f.id1) |
-+---------+-------+--------------+
-| Tiffany |     9 |            4 |
-| Gabriel |     9 |            4 |
-+---------+-------+--------------+
+mysql> select name,grade,count(f.id1) from highschooler h join friend f on h.id=f.id1 group by id1 having count(f.id1)= ( (select max(count) from (select id1,count(id2) as count from friend group by id1)as maxcount));
++--------+-------+--------------+
+| name   | grade | count(f.id1) |
++--------+-------+--------------+
+| Alexis |    11 |            4 |
+| Andrew |    10 |            4 |
++--------+-------+--------------+
 2 rows in set (0.00 sec)
