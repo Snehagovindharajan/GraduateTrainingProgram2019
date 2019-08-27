@@ -521,21 +521,55 @@ mysql> select m2.m_name,case when m2.born_in=6 then "BORN_IN" End as status from
 
 15. Jeff Dawn plays in a band with someone who plays in a band with Sue Little. Who is it and what are the bands? (1 point possible)
 
-mysql> select m1.m_no,p1.band_id,b1.band_name from musician m1 join performer perf on perf_is=m_no join plays_in p1 on perf_no=player join band b1 on band_id=band_no where m1.m_name='Jeff Dawn';
-+------+---------+---------------------+
-| m_no | band_id | band_name           |
-+------+---------+---------------------+
-|   10 |       2 | AASO                |
-|   10 |       8 | Swinging strings    |
-|   10 |       6 | Somebody Loves this |
-+------+---------+---------------------+
+mysql> select band_id,m_name from band join plays_in on band_no=band_id join performer on player=perf_no join musician on m_no=perf_is where band_id in (select p1.band_id from musician m1 join performer perf on perf_is=m_no join plays_in p1 on perf_no=player join band b1 on band_id=band_no where m1.m_name='Jeff Dawn');
++---------+--------------+
+| band_id | m_name       |
++---------+--------------+
+|       2 | John Smith   |
+|       2 | Theo Mengel  |
+|       2 | Harry Forte  |
+|       2 | Jeff Dawn    |
+|       8 | Jeff Dawn    |
+|       2 | Davis Heavan |
+|       8 | Davis Heavan |
+|       2 | James Quick  |
+|       2 | Elsie James  |
+|       6 | Harry Forte  |
+|       6 | Jeff Dawn    |
+|       8 | Davis Heavan |
++---------+--------------+
+12 rows in set (0.00 sec)
+
+mysql> select m_name from band join plays_in on band_no=band_id join performer on player=perf_no join musician on m_no=perf_is where band_id in (select p1.band_id from musician m1 join performer perf on perf_is=m_no join plays_in p1 on perf_no=player join band b1 on band_id=band_no where m1.m_name='Sue Little');
++-------------+
+| m_name      |
++-------------+
+| James First |
+| Sue Little  |
+| John Smith  |
++-------------+
 3 rows in set (0.00 sec)
 
-mysql> select m1.m_no,p1.band_id,b1.band_name from musician m1 join performer perf on perf_is=m_no join plays_in p1 on perf_no=player join band b1 on band_id=band_no where m1.m_name='Sue Little';
-+------+---------+-----------+
-| m_no | band_id | band_name |
-+------+---------+-----------+
-|    7 |       4 | BBSO      |
-+------+---------+-----------+
-1 row in set (0.00 sec)
-
+mysql> select table1.m_name,table1.band_name,table2.band_name from (
+	(select m_name,band_name from band 
+	join plays_in on band_no=band_id 
+	join performer on player=perf_no 
+	join musician on m_no=perf_is where band_id in 
+	(select p1.band_id from musician m1 
+	join performer perf on perf_is=m_no 
+	join plays_in p1 on perf_no=player 
+	join band b1 on band_id=band_no where m1.m_name='Jeff Dawn') ) table1 inner join 
+	(select m_name,band_name from band 
+	join plays_in on band_no=band_id 
+	join performer on player=perf_no 
+	join musician on m_no=perf_is where band_id in 
+	(select p1.band_id from musician m1 
+	join performer perf on perf_is=m_no 
+	join plays_in p1 on perf_no=player 
+	join band b1 on band_id=band_no where m1.m_name='Sue Little') ) table2 on table1.m_name=table2.m_name);
++------------+-----------+-----------+
+| m_name     | band_name | band_name |
++------------+-----------+-----------+
+| John Smith | AASO      | BBSO      |
++------------+-----------+-----------+
+1 row in set (0.35 sec)

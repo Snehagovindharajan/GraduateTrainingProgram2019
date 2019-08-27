@@ -83,6 +83,16 @@ mysql> select * from employee order by salary desc limit 3;
 +------+---------------+--------+--------+-----------+
 3 rows in set (0.00 sec)
 
+mysql> select name from (select name,dense_rank() over(order by salary desc) as maxsal from employee) as salary where maxsal between 1 and 3;
++---------------+
+| name          |
++---------------+
+| TARA CUMMINGS |
+| PAUL VINCENT  |
+| ADAM WAYNE    |
++---------------+
+3 rows in set (0.00 sec)
+
 2)Select the Employee with the least salary		
 
 mysql> select * from employee where
@@ -94,10 +104,29 @@ mysql> select * from employee where
 +------+-------------+--------+--------+-----------+
 1 row in set (0.00 sec)		
 
+mysql> select name,salary from (select name,salary,dense_rank() over(order by salary) as rank_no from employee ) as minsal where rank_no=1;
++-------------+--------+
+| name        | salary |
++-------------+--------+
+| JOHN HELLEN |  15380 |
++-------------+--------+
+1 row in set (0.00 sec)
+
+mysql> select name,min(salary) from employee;
++-------------+-------------+
+| name        | min(salary) |
++-------------+-------------+
+| JOHN HELLEN |       15380 |
++-------------+-------------+
+1 row in set (0.00 sec)
+
 3)Select the Employee who does not have a manager in the department table
 
-mysql> select * from employee where managerid is null;
+mysql> select * from employee left join dept on dep_id=dept_id where dept_id is null;
 Empty set (0.00 sec)
+
+mysql> select * from employee where dep_id not in ( select dept_id from dept);
+Empty set (0.09 sec)
 
 4)Select the Employee who is also a Manager	
 
@@ -121,7 +150,16 @@ mysql> select d.dep_manager,e.salary from employee e join dept d on e.name = d.d
 +--------------+--------+
 | ROBERT SWIFT |  27700 |
 +--------------+--------+
-1 row in set (0.00 sec)		
+1 row in set (0.00 sec)	
+
+mysql> select dep_manager,salary from (select d.dep_manager,salary,dense_rank() over(order by e.salary) as rank_no from employee e join dept d on e.name = d.dep_manager) as minsalary where rank_no=1;
++--------------+--------+
+| dep_manager  | salary |
++--------------+--------+
+| ROBERT SWIFT |  27700 |
++--------------+--------+
+1 row in set (0.00 sec)
+	
 
 6)Select the total number of Employees in Communications departments
 
@@ -143,6 +181,14 @@ mysql> select e.name ,e.salary from employee e where e.salary in (select max(e1.
 +------------+--------+
 1 row in set (0.00 sec)	
 
+mysql> select name from ( select name,salary,dense_rank() over(order by salary desc) rank_no from employee e1 join dept d1 on e1.dep_id = d1.dept_id and lower(d1.dep_name)='finance') as max_salary where rank_no=1;
++------------+
+| name       |
++------------+
+| ADAM WAYNE |
++------------+
+1 row in set (0.00 sec)
+
 8)Select the Employee in product depatment who has the least salary
 
 mysql> select e.name,e.salary from employee e where e.salary in (select min(e1.salary) from employee e1 join dept d1 on e1.dep_id = d1.dept_id and lower(d1.dep_name)='product');
@@ -151,7 +197,15 @@ mysql> select e.name,e.salary from employee e where e.salary in (select min(e1.s
 +-------------+--------+
 | NICK MARTIN |  50174 |
 +-------------+--------+
-1 row in set (0.04 sec)		
+1 row in set (0.04 sec)
+
+mysql> select name from ( select name,salary,dense_rank() over(order by salary) rank_no from employee e1 join dept d1 on e1.dep_id = d1.dept_id and lower(d1.dep_name)='product') as max_salary where rank_no=1;
++-------------+
+| name        |
++-------------+
+| NICK MARTIN |
++-------------+
+1 row in set (0.00 sec)		
 
 9)Select the count of Empolyees in Health with maximum salary
 
@@ -161,7 +215,16 @@ mysql> select count(salary) from employee where salary in (select max(e.salary) 
 +---------------+
 |             1 |
 +---------------+
-1 row in set (0.00 sec)				
+1 row in set (0.00 sec)			
+
+mysql> select count(name) from ( select name,salary,dense_rank() over(order by salary desc) rank_no from employee e1 join dept d1 on e1.dep_id = d1.dept_id and lower(d1.dep_name)='health') as max_salary where rank_no=1;
++-------------+
+| count(name) |
++-------------+
+|           1 |
++-------------+
+1 row in set (0.05 sec)	
+
 
 10)Select the Employees who report to Natasha Stevens		
 
@@ -215,6 +278,28 @@ mysql> select count(e.name),d.dep_name,d.dep_manager from employee e join dept d
 +---------------+----------+-------------+
 1 row in set (0.00 sec)
 
+select dep_name,count(rank_no),dep_manager from (select dep_manager,d.dep_name , name , dense_rank() over(partition by dep_name order by e_id) rank_no from employee e join dept d on e.dep_id = d.dept_id where lower(d.dep_name)='health') as count_health;
++----------+----------------+-------------+
+| dep_name | count(rank_no) | dep_manager |
++----------+----------------+-------------+
+| HEALTH   |              6 | TIM ARCHER  |
++----------+----------------+-------------+
+1 row in set (0.00 sec)
+
+mysql> select name,dep_name,dep_manager,count_eid from(select name,dep_name,dep_manager,count(e_id) over( partition by dep_name) as count_eid from dept join employee on dept_id=dep_id) as count_id where lower(dep_name)='communications';
++-----------------+----------------+-------------+-----------+
+| name            | dep_name       | dep_manager | count_eid |
++-----------------+----------------+-------------+-----------+
+| ROBIN WAYNE     | COMMUNICATIONS | ADAM JUSTIN |         6 |
+| STUART WILLIAM  | COMMUNICATIONS | ADAM JUSTIN |         6 |
+| STEVE MICHELOS  | COMMUNICATIONS | ADAM JUSTIN |         6 |
+| ADAM JUSTIN     | COMMUNICATIONS | ADAM JUSTIN |         6 |
+| HAROLLD STEVENS | COMMUNICATIONS | ADAM JUSTIN |         6 |
+| TOM HANKS       | COMMUNICATIONS | ADAM JUSTIN |         6 |
++-----------------+----------------+-------------+-----------+
+6 rows in set (0.00 sec)
+
+
 12)Display the Department id,Employee ids and Manager ids for the Communications department
 
 mysql> select d.dept_id,e.e_id,e.managerid from employee e join dept d on e.dep_id=d.dept_id where lower(d.dep_name)='communications';
@@ -264,6 +349,14 @@ mysql> select d.dep_name,d.dep_manager,d.dept_id,sum(e.salary) as count from emp
 +----------+-------------+---------+--------+
 1 row in set (0.00 sec)
 
+select dep_name,dep_manager,min(sum_salary) from (select distinct d.dep_name,d.dep_manager,sum(salary) over( partition by dep_name) as sum_salary from dept d join employee e on d.dept_id=e.dep_id order by sum_salary asc) as min_salary;
++----------+-------------+-----------------+
+| dep_name | dep_manager | min(sum_salary) |
++----------+-------------+-----------------+
+| PRODUCT  | BRUCE WILLS |          117035 |
++----------+-------------+-----------------+
+1 row in set (0.00 sec)
+
 16)Select the count of Employees in each department	
 
 mysql> select d.dep_name,count(e.e_id) from employee e join dept d on e.dep_id=d.dept_id group by d.dep_name;
@@ -276,7 +369,19 @@ mysql> select d.dep_name,count(e.e_id) from employee e join dept d on e.dep_id=d
 | INSURANCE      |             3 |
 | FINANCE        |             3 |
 +----------------+---------------+
-5 rows in set (0.00 sec)			
+5 rows in set (0.00 sec)	
+
+mysql> select distinct dep_name,dep_manager,count(e_id) over( partition by dep_name) as count_eid from dept join employee on dept_id=dep_id;
++----------------+-----------------+-----------+
+| dep_name       | dep_manager     | count_eid |
++----------------+-----------------+-----------+
+| COMMUNICATIONS | ADAM JUSTIN     |         6 |
+| FINANCE        | NATASHA STEVENS |         3 |
+| HEALTH         | TIM ARCHER      |         6 |
+| INSURANCE      | ROBERT SWIFT    |         3 |
+| PRODUCT        | BRUCE WILLS     |         2 |
++----------------+-----------------+-----------+
+5 rows in set (0.00 sec)		
 
 17)Select the count of Employees in each department having salary <10000
 
@@ -307,3 +412,16 @@ mysql> select d.dep_name,d.dep_manager,d.dept_id,count(e.e_id) as count from emp
 20)Select the Employees who has Tim Cook as their manager
 mysql> select e.name from employee e join dept d on e.dep_id=d.dept_id where lower(d.dep_manager)='tim cook';
 Empty set (0.38 sec)
+
+
+
+
+mysql> select sub_no,max(case when sub_name='english' then "english" else null end ) as sub1,max(case when sub_name='maths' then "maths" else null end) as sub2,max(case when sub_name='social' then "social" else null end) as sub3,max(case when sub_name='computer' then "computer" else null end) as sub4 from coltorow group by sub_no;
++--------+---------+-------+--------+----------+
+| sub_no | sub1    | sub2  | sub3   | sub4     |
++--------+---------+-------+--------+----------+
+|     11 | english | maths | social | computer |
+|     12 | NULL    | maths | NULL   | computer |
+|     13 | english | NULL  | social | computer |
++--------+---------+-------+--------+----------+
+3 rows in set (0.00 sec)
