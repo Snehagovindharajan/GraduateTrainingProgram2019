@@ -29,14 +29,14 @@ mysql> select d.dept_id,d.dept_name,ifnull(sum(e.emp_sal),0) as sum_emp_sal from
 2)Fetch all the Deptid &  aggregate all the salary for the respective dept id from Employee table & Corresponding Department name using department Table. If Any department is not available in department table then assign departname as 'Others'
 Note: Don’t use sub quesry or in or not in				
 				
-mysql> select e.dept_id,coalesce(d.dept_name,"others"),sum(e.emp_sal) as sum_emp_sal from department d right join employee e on e.dept_id=d.dept_id group by d.dept_id,d.dept_name;
-+---------+--------------------------------+-------------+
-| dept_id | coalesce(d.dept_name,"others") | sum_emp_sal |
-+---------+--------------------------------+-------------+
-|       1 | IT                             |        9000 |
-|       2 | Admin                          |       11000 |
-|       3 | others                         |        7000 |
-+---------+--------------------------------+-------------+
+mysql> select e.dept_id,coalesce(d.dept_name,"others") as dep_name ,sum(e.emp_sal) as sum_emp_sal from department d right join employee e on e.dept_id=d.dept_id group by d.dept_id,d.dept_name;
++---------+----------+-------------+
+| dept_id | dep_name | sum_emp_sal |
++---------+----------+-------------+
+|       1 | IT       |        9000 |
+|       2 | Admin    |       11000 |
+|       3 | others   |        7000 |
++---------+----------+-------------+
 3 rows in set (0.00 sec)
 
 create table employee1 (emp_id integer,emp_name varchar(20),manager_id integer,salary integer);
@@ -53,7 +53,7 @@ insert into employee1 values(8,'Aarthi',4,2700);
 3)Fetch all the Emp_id,Emp_name,Manager_ID and salary who is getting between 2700 and 10000
 Note: Don't use  between				
 
-mysql> select * from employee1 where salary>=2700 and salary<10000;
+mysql> select emp_id,emp_name,manager_id,salary from employee1 where salary>=2700 and salary<10000;
 +--------+----------+------------+--------+
 | emp_id | emp_name | manager_id | salary |
 +--------+----------+------------+--------+
@@ -68,17 +68,17 @@ mysql> select * from employee1 where salary>=2700 and salary<10000;
 4)Fetch all the Manager_ID,Manager_Name and Sum of the employee salary who is reporting to that manager
 Note: Don't use  between				
 				
-mysql> select emp.emp_id,emp.emp_name,sum(emp.salary) as sum_salary from employee1 e join employee1 emp on e.emp_id=emp.manager_id group by emp.manager_id;
+mysql> select e.emp_id,e.emp_name,sum(emp.salary) as sum_salary from employee1 e join employee1 emp on e.emp_id=emp.manager_id group by emp.manager_id order by e.emp_id;
 +--------+----------+------------+
 | emp_id | emp_name | sum_salary |
 +--------+----------+------------+
-|      1 | Vivek    |      11000 |
+|      1 | Vivek    |       5000 |
 |      2 | Raj      |       5000 |
-|      4 | Abhishek |       5000 |
-|      5 | Divya    |      10850 |
-|      8 | Aarthi   |       2700 |
+|      3 | Vinoth   |      10850 |
+|      4 | Abhishek |       2700 |
+|      8 | Aarthi   |      11000 |
 +--------+----------+------------+
-5 rows in set (0.00 sec)				
+5 rows in set (0.00 sec)		
 				
 create table employee2(emp_id integer,emp_name varchar(20));
 
@@ -93,18 +93,18 @@ insert into employee2 values(6,'Divyashree');
 *  Derv_emp_name will be from 4th character till end of the chanracter from emp_name
 Note: Don’t use regular expression				
 				
-mysql> select emp_id,substring(emp_name,4,length(emp_name)-4) from employee2;
-+--------+------------------------------------------+
-| emp_id | substring(emp_name,4,length(emp_name)-4) |
-+--------+------------------------------------------+
-|      1 | eshKuma                                  |
-|      2 | ayaRaj                                   |
-|      3 | ishe                                     |
-|      4 | eshKuma                                  |
-|      5 | ayaprakashSing                           |
-|      6 | yashre                                   |
-+--------+------------------------------------------+
-6 rows in set (0.07 sec)
+mysql> select emp_id,substring(emp_name,4,length(emp_name)+1) as emp_name from employee2;
++--------+-----------------+
+| emp_id | emp_name        |
++--------+-----------------+
+|      1 | eshKumar        |
+|      2 | ayaRaja         |
+|      3 | ishek           |
+|      4 | eshKumar        |
+|      5 | ayaprakashSingh |
+|      6 | yashree         |
++--------+-----------------+
+6 rows in set (0.00 sec)
 				
 6)Fetch all the emp_id & derv_Emp_Name 
 *  Derv_emp_name will be from first occurance of 'h' till  end of the chanracter from emp_name
@@ -122,6 +122,19 @@ mysql> select emp_id,substring(emp_name,position('h' in emp_name)+1,length(emp_n
 |      6 | ree      |
 +--------+----------+
 6 rows in set (0.00 sec)
+
+mysql> select emp_id,substring(emp_name,instr(emp_name,'h')+1,length(emp_name)-instr(emp_name,'h')) as emp_name from employee2;
++--------+----------+
+| emp_id | emp_name |
++--------+----------+
+|      1 | Kumar    |
+|      2 | ayaRaja  |
+|      3 | ishek    |
+|      4 | Kumar    |
+|      5 | Singh    |
+|      6 | ree      |
++--------+----------+
+6 rows in set (0.02 sec)
 				
 table employee1;			
 
@@ -176,7 +189,16 @@ mysql> select emp_id,emp_name,dept_name,salary from (select emp_id,emp_name,dept
 |      2 | Raj      | Admin     |   3500 |
 +--------+----------+-----------+--------+
 2 rows in set (0.00 sec)	
-				
+
+mysql> select emp_id,emp_name,dept_name,salary from employee3 where dept_name='IT'and salary>3000 or dept_name='Admin' and salary>3400;
++--------+----------+-----------+--------+
+| emp_id | emp_name | dept_name | salary |
++--------+----------+-----------+--------+
+|      2 | Raj      | Admin     |   3500 |
+|      4 | Abhishek | IT        |   5700 |
++--------+----------+-----------+--------+
+2 rows in set (0.00 sec)
+
 create table employee4 (emp_id integer,emp_name varchar(20),dept_name varchar(10),salary integer);
 
 insert into employee4 values(1,'Rajesh','IT',2000);
