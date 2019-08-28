@@ -1,0 +1,235 @@
+create table employee (emp_id integer,emp_name varchar(20),emp_sal integer,dept_id integer);
+
+insert into employee values(10,	'Vivek',2000,	1);
+insert into employee values(20,	'Raj',	3000,	1);
+insert into employee values(30,	'Vinoth',4000,	1);
+insert into employee values(40,	'Abhishek',5000,2);
+insert into employee values(50,	'Divya',6000,	2);
+insert into employee values(60,	'Chitra',7000,	3);
+
+create table department (dept_id integer,dept_name varchar(10));
+
+insert into department values(1,'IT');
+insert into department values(2,'Admin');
+insert into department values(4,'HR');
+
+1)Fetch all the Deptid,DeptName from department table & Corresponding Department salary using Employee  Table. If Any department is not available in employee table then assign salary as 0.
+Note: Don’t use sub quesry or in or not in				
+				
+mysql> select d.dept_id,d.dept_name,ifnull(sum(e.emp_sal),0) as sum_emp_sal from department d left join employee e on e.dept_id=d.dept_id group by d.dept_id,d.dept_name;
++---------+-----------+-------------+
+| dept_id | dept_name | sum_emp_sal |
++---------+-----------+-------------+
+|       1 | IT        |        9000 |
+|       2 | Admin     |       11000 |
+|       4 | HR        |           0 |
++---------+-----------+-------------+
+3 rows in set (0.01 sec)				
+				
+2)Fetch all the Deptid &  aggregate all the salary for the respective dept id from Employee table & Corresponding Department name using department Table. If Any department is not available in department table then assign departname as 'Others'
+Note: Don’t use sub quesry or in or not in				
+				
+mysql> select e.dept_id,coalesce(d.dept_name,"others"),sum(e.emp_sal) as sum_emp_sal from department d right join employee e on e.dept_id=d.dept_id group by d.dept_id,d.dept_name;
++---------+--------------------------------+-------------+
+| dept_id | coalesce(d.dept_name,"others") | sum_emp_sal |
++---------+--------------------------------+-------------+
+|       1 | IT                             |        9000 |
+|       2 | Admin                          |       11000 |
+|       3 | others                         |        7000 |
++---------+--------------------------------+-------------+
+3 rows in set (0.00 sec)
+
+create table employee1 (emp_id integer,emp_name varchar(20),manager_id integer,salary integer);
+
+insert into employee1 values(1,'Vivek',8,11000);
+insert into employee1 values(2,'Raj',1,2000);
+insert into employee1 values(3,'Vinoth',1,3000);
+insert into employee1 values(4,'Abhishek',2,5000);
+insert into employee1 values(5,'Divya',3,6000);
+insert into employee1 values(6,'Chitra',3,2350);
+insert into employee1 values(7,'Devi',3,2500);
+insert into employee1 values(8,'Aarthi',4,2700);
+
+3)Fetch all the Emp_id,Emp_name,Manager_ID and salary who is getting between 2700 and 10000
+Note: Don't use  between				
+
+mysql> select * from employee1 where salary>=2700 and salary<10000;
++--------+----------+------------+--------+
+| emp_id | emp_name | manager_id | salary |
++--------+----------+------------+--------+
+|      3 | Vinoth   |          1 |   3000 |
+|      4 | Abhishek |          2 |   5000 |
+|      5 | Divya    |          3 |   6000 |
+|      8 | Aarthi   |          4 |   2700 |
++--------+----------+------------+--------+
+4 rows in set (0.00 sec)
+				
+				
+4)Fetch all the Manager_ID,Manager_Name and Sum of the employee salary who is reporting to that manager
+Note: Don't use  between				
+				
+mysql> select emp.emp_id,emp.emp_name,sum(emp.salary) as sum_salary from employee1 e join employee1 emp on e.emp_id=emp.manager_id group by emp.manager_id;
++--------+----------+------------+
+| emp_id | emp_name | sum_salary |
++--------+----------+------------+
+|      1 | Vivek    |      11000 |
+|      2 | Raj      |       5000 |
+|      4 | Abhishek |       5000 |
+|      5 | Divya    |      10850 |
+|      8 | Aarthi   |       2700 |
++--------+----------+------------+
+5 rows in set (0.00 sec)				
+				
+create table employee2(emp_id integer,emp_name varchar(20));
+
+insert into employee2 values(1,'RajeshKumar');
+insert into employee2 values(2,'UdhayaRaja');
+insert into employee2 values(3,'Abhishek');
+insert into employee2 values(4,'MukeshKumar');
+insert into employee2 values(5,'VijayaprakashSingh');
+insert into employee2 values(6,'Divyashree');
+				
+5)Fetch all the emp_id & derv_Emp_Name 
+*  Derv_emp_name will be from 4th character till end of the chanracter from emp_name
+Note: Don’t use regular expression				
+				
+mysql> select emp_id,substring(emp_name,4,length(emp_name)-4) from employee2;
++--------+------------------------------------------+
+| emp_id | substring(emp_name,4,length(emp_name)-4) |
++--------+------------------------------------------+
+|      1 | eshKuma                                  |
+|      2 | ayaRaj                                   |
+|      3 | ishe                                     |
+|      4 | eshKuma                                  |
+|      5 | ayaprakashSing                           |
+|      6 | yashre                                   |
++--------+------------------------------------------+
+6 rows in set (0.07 sec)
+				
+6)Fetch all the emp_id & derv_Emp_Name 
+*  Derv_emp_name will be from first occurance of 'h' till  end of the chanracter from emp_name
+Note: Don’t use regular expression				
+
+mysql> select emp_id,substring(emp_name,position('h' in emp_name)+1,length(emp_name)-position('h' in emp_name)) as emp_name from employee2;
++--------+----------+
+| emp_id | emp_name |
++--------+----------+
+|      1 | Kumar    |
+|      2 | ayaRaja  |
+|      3 | ishek    |
+|      4 | Kumar    |
+|      5 | Singh    |
+|      6 | ree      |
++--------+----------+
+6 rows in set (0.00 sec)
+				
+table employee1;			
+
+7)Fetch emp_id,Emp_name & Salary who is getting 2nd maximum salary
+
+mysql> select emp_id,emp_name,manager_id,salary from (select emp_id,emp_name,manager_id,salary,dense_rank() over(order by salary desc) as sec_sal from employee1) as max_sal where sec_sal=2;
++--------+----------+------------+--------+
+| emp_id | emp_name | manager_id | salary |
++--------+----------+------------+--------+
+|      5 | Divya    |          3 |   6000 |
++--------+----------+------------+--------+
+1 row in set (0.11 sec)
+
+mysql> select emp_id,emp_name,manager_id,salary from employee1 e1 where 1=(select count(distinct e2.salary) from employee1 e2 where e1.salary < e2.salary);
++--------+----------+------------+--------+
+| emp_id | emp_name | manager_id | salary |
++--------+----------+------------+--------+
+|      5 | Divya    |          3 |   6000 |
++--------+----------+------------+--------+
+1 row in set (0.04 sec)
+
+8)Fetch emp_id,Emp_name & Salary who is getting top 3 salary
+Note : Don’t use top 			
+
+mysql> select emp_id,emp_name,manager_id,salary from (select emp_id,emp_name,manager_id,salary,dense_rank() over(order by salary desc) as sec_sal from employee1) as max_sal where sec_sal<=3;
++--------+----------+------------+--------+
+| emp_id | emp_name | manager_id | salary |
++--------+----------+------------+--------+
+|      1 | Vivek    |          8 |  11000 |
+|      5 | Divya    |          3 |   6000 |
+|      4 | Abhishek |          2 |   5000 |
++--------+----------+------------+--------+
+3 rows in set (0.00 sec)				
+				
+create table employee3 (emp_id integer,emp_name varchar(20),dept_name varchar(10),salary integer);
+
+insert into employee3 values(1,'Vivek','IT',2000);
+insert into employee3 values(2,'Raj','Admin',3500);
+insert into employee3 values(3,'Vinoth','HR',4800);
+insert into employee3 values(4,'Abhishek','IT',5700);
+insert into employee3 values(5,'Divya','ITES',3000);
+insert into employee3 values(6,'Chitra','HR',5800);
+insert into employee3 values(7,'Devi','Admin',3200);
+		
+9)Fetch emp_id,Emp_name,Dept_name & Salary who is getting salary greater than 3000 int 'IT' and  salary greater than 3400 int 'Admin'
+				
+mysql> select emp_id,emp_name,dept_name,salary from (select emp_id,emp_name,dept_name,case when dept_name='IT' and salary>3000 then salary when dept_name='Admin' and salary>3400 then salary end as salary from employee3) as dept_sal where salary is not null order by emp_name;
++--------+----------+-----------+--------+
+| emp_id | emp_name | dept_name | salary |
++--------+----------+-----------+--------+
+|      4 | Abhishek | IT        |   5700 |
+|      2 | Raj      | Admin     |   3500 |
++--------+----------+-----------+--------+
+2 rows in set (0.00 sec)	
+				
+create table employee4 (emp_id integer,emp_name varchar(20),dept_name varchar(10),salary integer);
+
+insert into employee4 values(1,'Rajesh','IT',2000);
+insert into employee4 values(2,'Ajaykumar','Admin',3500);
+insert into employee4 values(3,'Abhishek','HR',4800);
+insert into employee4 values(4,'Vivekkumar','IT',5700);
+insert into employee4 values(5,'Balaji','ITES',3000);
+insert into employee4 values(6,'Raveendar','HR',5800);
+insert into employee4 values(7,'Poornarao','Admin',3200);
+		
+				
+10)Fetch emp_id,Emp_name,Dept_name & Salary who is having sring 'J' in emp_name
+
+mysql> select emp_id,emp_name,dept_name,salary from employee4 where emp_name like '%j%';
++--------+-----------+-----------+--------+
+| emp_id | emp_name  | dept_name | salary |
++--------+-----------+-----------+--------+
+|      1 | Rajesh    | IT        |   2000 |
+|      2 | Ajaykumar | Admin     |   3500 |
+|      5 | Balaji    | ITES      |   3000 |
++--------+-----------+-----------+--------+
+3 rows in set (0.00 sec)			
+				
+11)Fetch emp_id,Emp_name,Dept_name & Salary who is having any of sring 'J','N','M' in emp_name
+
+mysql> select emp_id,emp_name,dept_name,salary from employee4 where emp_name like '%j%' or emp_name like '%n%' or emp_name like '%m%';
++--------+------------+-----------+--------+
+| emp_id | emp_name   | dept_name | salary |
++--------+------------+-----------+--------+
+|      1 | Rajesh     | IT        |   2000 |
+|      2 | Ajaykumar  | Admin     |   3500 |
+|      4 | Vivekkumar | IT        |   5700 |
+|      5 | Balaji     | ITES      |   3000 |
+|      6 | Raveendar  | HR        |   5800 |
+|      7 | Poornarao  | Admin     |   3200 |
++--------+------------+-----------+--------+
+6 rows in set (0.00 sec)
+
+12)Fetch emp_id,Emp_name,Dept_name & Salary who is having all of sring 'B','H','E' in emp_name
+				
+mysql> select emp_id,emp_name,dept_name,salary from employee4 where emp_name like '%b%' and emp_name like '%h%' and emp_name like '%e%';
++--------+----------+-----------+--------+
+| emp_id | emp_name | dept_name | salary |
++--------+----------+-----------+--------+
+|      3 | Abhishek | HR        |   4800 |
++--------+----------+-----------+--------+
+1 row in set (0.00 sec)		
+
+mysql> select emp_id,emp_name,dept_name,salary from employee4 where emp_name like '%b%h%e%';
++--------+----------+-----------+--------+
+| emp_id | emp_name | dept_name | salary |
++--------+----------+-----------+--------+
+|      3 | Abhishek | HR        |   4800 |
++--------+----------+-----------+--------+
+1 row in set (0.00 sec)	
+				
