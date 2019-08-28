@@ -239,24 +239,24 @@ mysql> select distinct city from guest;
 
 7. List the average price of a room.
 
-mysql> select room_no,avg(price) from room group by room_no;
-+---------+------------+
-| room_no | avg(price) |
-+---------+------------+
-|     223 |        155 |
-|     257 |        140 |
-|     313 |        145 |
-|     345 |        160 |
-|     412 |        145 |
-|     467 |        180 |
-|     876 |        124 |
-|     898 |        124 |
-|    1001 |        150 |
-|    1201 |        175 |
-|    1267 |        175 |
-|    1289 |        195 |
-+---------+------------+
-12 rows in set (0.00 sec)
+mysql> select room_no,avg(price) as average_price from room group by room_no;
++---------+---------------+
+| room_no | average_price |
++---------+---------------+
+|     223 |           155 |
+|     257 |           140 |
+|     313 |           145 |
+|     345 |           160 |
+|     412 |           145 |
+|     467 |           180 |
+|     876 |           124 |
+|     898 |           124 |
+|    1001 |           150 |
+|    1201 |           175 |
+|    1267 |           175 |
+|    1289 |           195 |
++---------+---------------+
+12 rows in set (0.03 sec)
 
 8. List hotel names, their room numbers, and the type of that room.
 
@@ -326,9 +326,29 @@ mysql> select h.name,r.room_no from hotel h join room r on h.hotel_no=r.hotel_no
 +------------------+---------+
 5 rows in set (0.00 sec)
 
+mysql> select h.name,r.room_no from hotel h join room r on h.hotel_no=r.hotel_no left join booking b on r.room_no=b.room_no where b.room_no is null;
++------------------+---------+
+| name             | room_no |
++------------------+---------+
+| Empire Hotel     |     313 |
+| Park Place       |    1289 |
+| Brownstone Hotel |     876 |
+| Brownstone Hotel |     898 |
+| Clairmont Hotel  |     257 |
++------------------+---------+
+5 rows in set (0.00 sec)
+
 13. List the hotel name and city of the hotel with the highest priced room.
 
 mysql> select h.name,h.city,r.price from hotel h join room r on h.hotel_no = r.hotel_no where r.price in (select max(price) from room);
++------------+----------+-------+
+| name       | city     | price |
++------------+----------+-------+ 
+| Park Place | New York |   195 |
++------------+----------+-------+
+1 row in set (0.00 sec)
+
+mysql> select name,city,price from (select name,city,price,dense_rank() over(order by r.price desc) as rank_price from hotel h join room r on h.hotel_no=r.hotel_no) as max_price where rank_price=1;
 +------------+----------+-------+
 | name       | city     | price |
 +------------+----------+-------+
