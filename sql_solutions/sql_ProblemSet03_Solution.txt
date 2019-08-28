@@ -147,6 +147,15 @@ mysql> select distinct year from movie m join rating r on m.mid=r.mid where star
 
 3. Find the titles of all movies that have no ratings. (1 point possible)
 
+mysql> select title from movie m left join rating r on m.mid=r.mid where r.mid is null;
++-----------+
+| title     |
++-----------+
+| Star Wars |
+| Titanic   |
++-----------+
+2 rows in set (0.00 sec)
+
 mysql> select distinct title from movie where mid not in (select mid from rating); 
 +-----------+
 | title     |
@@ -206,6 +215,19 @@ mysql> select name,title from rating r1 join rating r2 on r1.rid=r2.rid and r1.m
 mysql> select title,max(stars) from movie m1 join rating r1 on m1.mid=r1.mid where stars in (select max(r.stars) from rating r join movie m on r.mid = m.mid group by m.title) group by title order by title;
 +-------------------------+------------+
 | title                   | max(stars) |
++-------------------------+------------+
+| Avatar                  |          5 |
+| E.T.                    |          3 |
+| Gone with the Wind      |          4 |
+| Raiders of the Lost Ark |          4 |
+| Snow White              |          5 |
+| The Sound of Music      |          3 |
++-------------------------+------------+
+6 rows in set (0.00 sec)
+
+mysql> select title,max_rating from (select title,max(r.stars) over(partition by title) as max_rating from movie m join rating r on m.mid=r.mid) as max_stars group by title;
++-------------------------+------------+
+| title                   | max_rating |
 +-------------------------+------------+
 | Avatar                  |          5 |
 | E.T.                    |          3 |
@@ -375,6 +397,19 @@ mysql> select name,title from reviewer,movie order by name,title;
 64 rows in set (0.00 sec)
 
 13. Find the titles of all movies not reviewed by Chris Jackson. (1 point possible)
+
+mysql> select distinct m.title from movie m join rating r on m.mid=r.mid join reviewer view on r.rid=view.rid where lower(name)!='chris jackson';
++-------------------------+
+| title                   |
++-------------------------+
+| Gone with the Wind      |
+| Snow White              |
+| The Sound of Music      |
+| Raiders of the Lost Ark |
+| Avatar                  |
+| E.T.                    |
++-------------------------+
+6 rows in set (0.00 sec)
 
 mysql> select title from movie where mid not in (select mid from rating r join reviewer view on r.rid=view.rid where lower(name)='chris jackson');
 +--------------------+
