@@ -266,45 +266,45 @@ mysql> select c_title,concert_venue,con_date from musician join composer on m_no
 
 5. List the different instruments played by the musicians and avg number of musicians who play the instrument. (1 point possible)
 
-mysql> select instrument,count(perf_no) as count from performer group by instrument;
-+------------+----------------+
-| instrument | count(perf_no) |
-+------------+----------------+
-| violin     |              7 |
-| viola      |              4 |
-| banjo      |              1 |
-| guitar     |              2 |
-| trumpet    |              1 |
-| bass       |              3 |
-| flute      |              2 |
-| cornet     |              1 |
-| drums      |              2 |
-| cello      |              3 |
-| trombone   |              1 |
-| horn       |              1 |
-| clarinet   |              1 |
-+------------+----------------+
+mysql> select instrument,count(perf_no) as count_of_instrument from performer group by instrument;
++------------+---------------------+
+| instrument | count_of_instrument |
++------------+---------------------+
+| violin     |                   7 |
+| viola      |                   4 |
+| banjo      |                   1 |
+| guitar     |                   2 |
+| trumpet    |                   1 |
+| bass       |                   3 |
+| flute      |                   2 |
+| cornet     |                   1 |
+| drums      |                   2 |
+| cello      |                   3 |
+| trombone   |                   1 |
+| horn       |                   1 |
+| clarinet   |                   1 |
++------------+---------------------+
 13 rows in set (0.00 sec)
 
-mysql> select outerquery.instrument,avg(count) from (select instrument,count(perf_no) as count from performer group by instrument) as outerquery group by outerquery.instrument;
-+------------+------------+
-| instrument | avg(count) |
-+------------+------------+
-| violin     |     7.0000 |
-| viola      |     4.0000 |
-| banjo      |     1.0000 |
-| guitar     |     2.0000 |
-| trumpet    |     1.0000 |
-| bass       |     3.0000 |
-| flute      |     2.0000 |
-| cornet     |     1.0000 |
-| drums      |     2.0000 |
-| cello      |     3.0000 |
-| trombone   |     1.0000 |
-| horn       |     1.0000 |
-| clarinet   |     1.0000 |
-+------------+------------+
-13 rows in set (0.00 sec)
+mysql> select outerquery.instrument,avg(count) as avg_count_of_instrument from (select instrument,count(perf_no) as count from performer group by instrument) as outerquery group by outerquery.instrument;
++------------+-------------------------+
+| instrument | avg_count_of_instrument |
++------------+-------------------------+
+| violin     |                  7.0000 |
+| viola      |                  4.0000 |
+| banjo      |                  1.0000 |
+| guitar     |                  2.0000 |
+| trumpet    |                  1.0000 |
+| bass       |                  3.0000 |
+| flute      |                  2.0000 |
+| cornet     |                  1.0000 |
+| drums      |                  2.0000 |
+| cello      |                  3.0000 |
+| trombone   |                  1.0000 |
+| horn       |                  1.0000 |
+| clarinet   |                  1.0000 |
++------------+-------------------------+
+13 rows in set (0.05 sec)
 
 6. List the names, dates of birth and the instrument played of living musicians who play a instrument which Theo also plays. (1 point possible)
 
@@ -369,17 +369,17 @@ Empty set (0.00 sec)
 
 9. Show the least commonly played instrument and the number of musicians who play it. (1 point possible)
 
-mysql> select instrument,count(perf_no) from performer group by instrument having count(perf_no) = (select min(ins_count) from (select count(perf_no) as ins_count from performer group by instrument) as min_ins);
-+------------+----------------+
-| instrument | count(perf_no) |
-+------------+----------------+
-| banjo      |              1 |
-| trumpet    |              1 |
-| cornet     |              1 |
-| trombone   |              1 |
-| horn       |              1 |
-| clarinet   |              1 |
-+------------+----------------+
+mysql> select instrument,count(perf_no) as count_performer from performer group by instrument having count(perf_no) = (select min(ins_count) from (select count(perf_no) as ins_count from performer group by instrument) as min_ins);
++------------+-----------------+
+| instrument | count_performer |
++------------+-----------------+
+| banjo      |               1 |
+| trumpet    |               1 |
+| cornet     |               1 |
+| trombone   |               1 |
+| horn       |               1 |
+| clarinet   |               1 |
++------------+-----------------+
 6 rows in set (0.00 sec)
 
 10. List the bands that have played music composed by Sue Little; Give the titles of the composition in each case. (1 point possible)

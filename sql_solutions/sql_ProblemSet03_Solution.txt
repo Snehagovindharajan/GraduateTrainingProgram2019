@@ -123,27 +123,28 @@ mysql> select * from rating;
 
 1. Find the titles of all movies directed by Steven Spielberg. (1 point possible)
 
-mysql> select title from movie where lower(director)='steven spielberg';
-+-------------------------+
-| title                   |
-+-------------------------+
-| E.T.                    |
-| Raiders of the Lost Ark |
-+-------------------------+
+mysql> select title,director,year from movie where lower(director)='steven spielberg';
++-------------------------+------------------+------+
+| title                   | director         | year |
++-------------------------+------------------+------+
+| E.T.                    | Steven Spielberg | 1982 |
+| Raiders of the Lost Ark | Steven Spielberg | 1981 |
++-------------------------+------------------+------+
 2 rows in set (0.00 sec)
 
 2. Find all years that have a movie that received a rating of 4 or 5, and sort them in increasing order. (1 point possible)
 
-mysql> select distinct year from movie m join rating r on m.mid=r.mid where stars between 4 and 5 order by year;
-+------+
-| year |
-+------+
-| 1937 |
-| 1939 |
-| 1981 |
-| 2009 |
-+------+
-4 rows in set (0.00 sec)
+mysql> select distinct title,year,stars from movie m join rating r on m.mid=r.mid where stars between 4 and 5 order by year;
++-------------------------+------+-------+
+| title                   | year | stars |
++-------------------------+------+-------+
+| Snow White              | 1937 |     4 |
+| Snow White              | 1937 |     5 |
+| Gone with the Wind      | 1939 |     4 |
+| Raiders of the Lost Ark | 1981 |     4 |
+| Avatar                  | 2009 |     5 |
++-------------------------+------+-------+
+5 rows in set (0.00 sec)
 
 3. Find the titles of all movies that have no ratings. (1 point possible)
 
@@ -454,7 +455,7 @@ mysql> select name,title,stars from reviewer view join rating r on view.rid=r.ri
 | Sarah Martinez  | Gone with the Wind      |     2 |
 | Brittany Harris | The Sound of Music      |     2 |
 | Brittany Harris | Raiders of the Lost Ark |     2 |
-| Chris Jackson   | E.T.                    |     2 |
+| Chris Jackson   | E.T.                    |     2 | 
 +-----------------+-------------------------+-------+
 4 rows in set (0.00 sec)
 
@@ -536,4 +537,3 @@ mysql> (select title,director,max(stars) from rating r join movie m on r.mid=m.m
 | Gone with the Wind      | Victor Fleming   |          4 |
 +-------------------------+------------------+------------+
 4 rows in set (0.00 sec)
-
