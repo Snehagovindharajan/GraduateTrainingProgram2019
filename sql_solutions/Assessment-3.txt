@@ -1,0 +1,179 @@
+create table author(author_id varchar(10),author_name varchar(30),author_country varchar(30),author_city varchar(30),publish_id varchar(10));
+
+insert into author values('AUT001','William Norton','UK','Cambridge','PB01');
+insert into author values('AUT002','C. J. Wilde ','USA','San Francisco','PB04');
+insert into author values('AUT003','John Betjeman Hunter','RUSSIA','Moscow','PB01');
+insert into author values('AUT004','John Betjeman Hunter','CANADA','Toronto','PB03');
+insert into author values('AUT005','S.B.Swaminathan','INDIA','Delhi','PB01');
+insert into author values('AUT006','Butler Andre','UK','London','PB03');
+insert into author values('AUT007','E. Howard','EUROPE','Berlin','PB03');
+insert into author values('AUT008','Andrew Jeff','GERMANY','Berlin','PB02');
+insert into author values('AUT009','Drek Tailor','Australia','Melbourne','PB01');
+insert into author values('AUT010','Mary Coffing','USA','New Jersy','PB04');
+
+
+create table publish(publish_id varchar(10),publish_name varchar(30),publish_city varchar(30),publish_start_date date,branches integer);
+
+insert into publish values('PB01','Jex Max Publication','BERLIN','1929-04-21',10);
+insert into publish values('PB02','Summer Night Publication','CANADA','2019-08-31',25);
+insert into publish values('PB03','Novel Publisher Ltd','LONDON','2018-08-10',11);
+insert into publish values('PB04','Mark Book Sales','NEW JERSY','2008-05-24',9);
+
+create table trip ( trip_id varchar(10),trip_source varchar(10),trip_dest varchar(10),trip_start_time time,trip_end_time time, trip_cost integer,dynamic_fare varchar(5));
+
+insert into trip values('TP01','CHN','BGL','13:40','15:40',3500,'Y');
+insert into trip values('TP02','BGL','MUM','18:20','19:20',6700,'Y');
+insert into trip values('TP03','CHN','HYD','9:45','11:10',3000,'Y');
+insert into trip values('TP04','HYD','BGL','12:20','13:25',2700,'N');
+insert into trip values('TP05','MUM','NDL','23:00','1:25',4500,'Y');
+insert into trip values('TP06','BGL','NDL','19:40','22:10',5000,'N');
+insert into trip values('TP07','NDL','MUM','16:45','17:50',6000,'Y');
+insert into trip values('TP08','MUM','BGL','20:20','23:45',5000,'N');
+insert into trip values('TP09','NDL','HYD','11:25','13:45',3000,'N');
+insert into trip values('TP10','HYD','CHN','20:30','22:20',4500,'Y');
+insert into trip values('TP11','BGL','CHN','23:45','1:05',3900,'Y');
+
+create table stats (stats_id integer,month integer,year integer,temp_fare float,rain_inch float);
+
+insert into stats values(13,1,2010,57.4,0.31);
+insert into stats values(13,5,2010,91.7,5.15);
+insert into stats values(13,12,2010,12.6,8.34);
+insert into stats values(13,9,2010,100.3,10.34);
+insert into stats values(44,9,2010,27.2,3.45);
+insert into stats values(44,2,2010,27.3,0.18);
+insert into stats values(44,6,2010,74.8,2.11);
+insert into stats values(66,3,2010,6.7,2.1);
+insert into stats values(66,7,2010,65.8,4.52);
+
+create table station (station_id integer,city varchar(10),state varchar(10),lat_n integer,long_w integer);
+
+insert into station values(13,'Phoenix','AZ',33,112);
+insert into station values(44,'Denver','CO',40,105);
+insert into station values(66,'Caribou','ME',47,68);
+
+SET - 1
+
+1)Fetch publisher information who have publish_city <> author_city and check if publish_city = author_country . display the correct publisher_city along with other publisher information based on author_city
+
+mysql> select a.author_name,a.author_city,p.publish_name,p.publish_city,p.publish_start_date,p.branches from author a join publish p on a.publish_id = p.publish_id where a.author_city != p.publish_city and a.author_country=p.publish_city;
+Empty set (0.00 sec)
+
+2)Fetch authors_name, author_country, publish_city, publish_start_date, branches who have publications with most number of branches by century
+
+mysql> select publish_id,author_name,author_country,publish_city,publish_start_date,branches from (select publish_id,author_name,author_country,publish_city,publish_start_date,branches,date,dense_rank() over(partition by date order by branches desc) as rank1 from(select a.publish_id,a.author_name,a.author_country,p.publish_city,p.publish_start_date ,p.branches, case when p.publish_start_date then round(date_format(p.publish_start_date,'%Y')/100) end as date from publish p join author a on p.publish_id=a.publish_id) as max_branch) as branches where rank1=1;
++------------+----------------------+----------------+--------------+--------------------+----------+
+| publish_id | author_name          | author_country | publish_city | publish_start_date | branches |
++------------+----------------------+----------------+--------------+--------------------+----------+
+| PB01       | William Norton       | UK             | BERLIN       | 1929-04-21         |       10 |
+| PB01       | John Betjeman Hunter | RUSSIA         | BERLIN       | 1929-04-21         |       10 |
+| PB01       | S.B.Swaminathan      | INDIA          | BERLIN       | 1929-04-21         |       10 |
+| PB01       | Drek Tailor          | Australia      | BERLIN       | 1929-04-21         |       10 |
+| PB02       | Andrew Jeff          | GERMANY        | CANADA       | 2019-08-31         |       25 |
++------------+----------------------+----------------+--------------+--------------------+----------+
+5 rows in set (0.02 sec)
+
+3)Fetch publisher details who have authors in same city and get corresponding author details who belong to same country
+
+mysql> select a1.author_id,a1.author_name,p1.publish_id,p1.publish_name,p1.publish_city from publish p left join author a on a.publish_id=p.publish_id  left join author a1 on a1.author_country=a.author_country join publish p1 on a1.publish_id=p1.publish_id where p.publish_city=a.author_city;
++-----------+----------------+------------+---------------------+--------------+
+| author_id | author_name    | publish_id | publish_name        | publish_city |
++-----------+----------------+------------+---------------------+--------------+
+| AUT001    | William Norton | PB01       | Jex Max Publication | BERLIN       |
+| AUT006    | Butler Andre   | PB03       | Novel Publisher Ltd | LONDON       |
+| AUT002    | C. J. Wilde    | PB04       | Mark Book Sales     | NEW JERSY    |
+| AUT010    | Mary Coffing   | PB04       | Mark Book Sales     | NEW JERSY    |
++-----------+----------------+------------+---------------------+--------------+
+4 rows in set (0.00 sec)
+
+4)Fetch authors who have incorrect author_country for same author_city. Display correct author_country along with all author_information
+5)Fetch authors who do not have publisher from their country
+
+mysql> select a1.author_id,a1.author_name,a1.author_country,a1.author_city,p1.publish_id,p1.publish_name,p1.publish_city from author a join publish p on a.publish_id=p.publish_id and a.author_city = p.publish_city right join author a1 on a.author_country=a1.author_country join publish p1 on a1.publish_id=p1.publish_id where p.publish_id is null;
++-----------+----------------------+----------------+-------------+------------+--------------------------+--------------+
+| author_id | author_name          | author_country | author_city | publish_id | publish_name             | publish_city |
++-----------+----------------------+----------------+-------------+------------+--------------------------+--------------+
+| AUT003    | John Betjeman Hunter | RUSSIA         | Moscow      | PB01       | Jex Max Publication      | BERLIN       |
+| AUT004    | John Betjeman Hunter | CANADA         | Toronto     | PB03       | Novel Publisher Ltd      | LONDON       |
+| AUT005    | S.B.Swaminathan      | INDIA          | Delhi       | PB01       | Jex Max Publication      | BERLIN       |
+| AUT007    | E. Howard            | EUROPE         | Berlin      | PB03       | Novel Publisher Ltd      | LONDON       |
+| AUT008    | Andrew Jeff          | GERMANY        | Berlin      | PB02       | Summer Night Publication | CANADA       |
+| AUT009    | Drek Tailor          | Australia      | Melbourne   | PB01       | Jex Max Publication      | BERLIN       |
++-----------+----------------------+----------------+-------------+------------+--------------------------+--------------+
+6 rows in set (0.00 sec)
+
+6)Fetch author details if first character of publisher name is same as author_name
+
+mysql> select author_name,publish_name from author a join publish p on a.publish_id=p.publish_id where substring(author_name,1,1)=substring(publish_name,1,1);
++----------------------+---------------------+
+| author_name          | publish_name        |
++----------------------+---------------------+
+| John Betjeman Hunter | Jex Max Publication |
+| Mary Coffing         | Mark Book Sales     |
++----------------------+---------------------+
+2 rows in set (0.00 sec)
+
+7)Fetch author details who have more than one initial before their name
+
+mysql> select author_name from author where locate('.',author_name,locate('.',author_name)+1) > 2;
++-----------------+
+| author_name     |
++-----------------+
+| C. J. Wilde     |
+| S.B.Swaminathan |
++-----------------+
+2 rows in set (0.00 sec)
+
+8)Fetch author details who do not have initial in their name
+
+mysql> select author_name from author where locate('.',author_name)=0;
++----------------------+
+| author_name          |
++----------------------+
+| William Norton       |
+| John Betjeman Hunter |
+| John Betjeman Hunter |
+| Butler Andre         |
+| Andrew Jeff          |
+| Drek Tailor          |
+| Mary Coffing         |
++----------------------+
+7 rows in set (0.00 sec)
+
+9)Fetch author details who have lower case in author_name
+10)Fetch author information and publisher information who have publisher with recent publish_start_date.
+11)Fetch count of authors belong to same continent(eg. Berlin -> Europe)
+
+SET - 3
+
+1)Fetch rows which have hottest month per city with highest rainfall
+2)Fetch and display rows with Station_ID, City, State, Month, Year and temp(in Celcius), rainfall (in cm)
+
+mysql> select s.stats_id,s1.city,s1.state,s.month,s.year,round((rain_inch * 03937),2) as rain_cm,round(((temp_fare-32)*(5/9)),2) as temp_cel from stats s join station s1 on s.stats_id=s1.station_id;
++----------+---------+-------+-------+------+----------+----------+
+| stats_id | city    | state | month | year | rain_cm  | temp_cel |
++----------+---------+-------+-------+------+----------+----------+
+|       13 | Phoenix | AZ    |     1 | 2010 |  1220.47 |    14.11 |
+|       13 | Phoenix | AZ    |     5 | 2010 | 20275.55 |    33.17 |
+|       13 | Phoenix | AZ    |    12 | 2010 | 32834.58 |   -10.78 |
+|       13 | Phoenix | AZ    |     9 | 2010 | 40708.58 |    37.94 |
+|       44 | Denver  | CO    |     9 | 2010 | 13582.65 |    -2.67 |
+|       44 | Denver  | CO    |     2 | 2010 |   708.66 |    -2.61 |
+|       44 | Denver  | CO    |     6 | 2010 |  8307.07 |    23.78 |
+|       66 | Caribou | ME    |     3 | 2010 |  8267.70 |   -14.06 |
+|       66 | Caribou | ME    |     7 | 2010 | 17795.24 |    18.78 |
++----------+---------+-------+-------+------+----------+----------+
+9 rows in set (0.07 sec)
+
+3)Display all rows for states on all quarters. If a state do not have any quarter information, default Temp in Celcius and rain in cms based on average for the year
+4)Which state has coldest month and highest rainfall compared to average per year
+5)Which city had maximum rainfall below average . Display city, state, rainfall, average information
+6)Which city had second  coldest month when compared to national average
+7)create a view based on question#3. If you query view, you should have resultset matching with question #3
+8)Report stations which had temperature difference < 5 C  or difference > 20 C in subsequent quarters
+9)Report stations which obsevered temperatures less than 0(in celcius)
+10)Display state information and number of times when rainfall is greater than national avergae
+
+
+
+select publish_id,author_name,author_country,publish_city,publish_start_date,branches from (select publish_id,author_name,author_country,publish_city,publish_start_date,branches,date,dense_rank() over(partition by date order by branches desc) as rank1 from(select a.publish_id,a.author_name,a.author_country,p.publish_city,p.publish_start_date ,p.branches, case when p.publish_start_date then round(date_format(p.publish_start_date,'%Y')/100) end as date from publish p join author a on p.publish_id=a.publish_id) as max_branch) as branches where rank1=1;
+
