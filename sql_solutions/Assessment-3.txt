@@ -141,11 +141,171 @@ mysql> select author_name from author where locate('.',author_name)=0;
 
 9)Fetch author details who have lower case in author_name
 10)Fetch author information and publisher information who have publisher with recent publish_start_date.
+
+mysql> select p.publish_name,p.publish_city,p.publish_start_date,a.author_id,a.author_name,a.author_country,a.author_city from publish p join author a on p.publish_id=a.publish_id where date_format(current_date,'%Y')=date_format(publish_start_date,'%Y') order by p.publish_name;
++--------------------------+--------------+--------------------+-----------+-------------+----------------+-------------+
+| publish_name             | publish_city | publish_start_date | author_id | author_name | author_country | author_city |
++--------------------------+--------------+--------------------+-----------+-------------+----------------+-------------+
+| Summer Night Publication | CANADA       | 2019-08-31         | AUT008    | Andrew Jeff | GERMANY        | Berlin      |
++--------------------------+--------------+--------------------+-----------+-------------+----------------+-------------+
+1 row in set (0.00 sec)
+
+
 11)Fetch count of authors belong to same continent(eg. Berlin -> Europe)
+
+SET - 2
+
+1)Fetch itinerary details from CHN to NDL which are cheaper
+
+mysql> select source,td1,ts2,td2,ts3,destination,cost from (select source,td1,ts2,td2,ts3,destination,cost,dense_rank() over(order by cost) as rank_cost from(select  t1.trip_source source,t1.trip_dest td1,t2.trip_source ts2,t2.trip_dest td2,t3.trip_source ts3,t3.trip_dest destination,t3.trip_cost+t2.trip_cost+t1.trip_cost as cost from trip t1 join trip t2 on t1.trip_dest=t2.trip_source join trip t3 on t2.trip_dest=t3.trip_source where t1.trip_source='CHN' and t3.trip_dest='NDL') as t) min_cost where rank_cost = 1;
++--------+------+------+------+------+-------------+-------+
+| source | td1  | ts2  | td2  | ts3  | destination | cost  |
++--------+------+------+------+------+-------------+-------+
+| CHN    | HYD  | HYD  | BGL  | BGL  | NDL         | 10700 |
++--------+------+------+------+------+-------------+-------+
+1 row in set (0.00 sec)
+
+2)Fetch itinerary details from CHN to NDL which have less travel time
+
+		select source,td1,ts2,td2,ts3,destination,add_time from (
+		select source,td1,ts2,td2,ts3,destination,add_time,dense_rank() over(partition by source,destination order by add_time) as rank_time from(
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		addtime(addtime(abs(timediff(t1.trip_end_time,t1.trip_start_time)),abs(timediff(t2.trip_end_time,t2.trip_start_time))),abs(timediff					(t3.trip_end_time,t3.trip_start_time))) as add_time 
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL') 
+		as time ) as min_time where rank_time = 1;
+
++--------+------+------+------+------+-------------+----------+
+| source | td1  | ts2  | td2  | ts3  | destination | add_time |
++--------+------+------+------+------+-------------+----------+
+| CHN    | HYD  | HYD  | BGL  | BGL  | NDL         | 05:00:00 |
++--------+------+------+------+------+-------------+----------+
+1 row in set (0.00 sec)
+
+		select source,td1,ts2,td2,ts3,destination,add_time from (
+		select source,td1,ts2,td2,ts3,destination,add_time,dense_rank() over(partition by source,destination order by add_time) as rank_time from(
+		select source,td1,ts2,td2,ts3,destination,addtime(addtime(time1,time2),time3) as add_time from (
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		case when t1.trip_start_time < t1.trip_end_time then timediff(t1.trip_end_time,t1.trip_start_time) else timediff('24:00:00',timediff					(t1.trip_start_time,t1.trip_end_time))	end as time1,
+		case when t2.trip_start_time < t2.trip_end_time then timediff(t2.trip_end_time,t2.trip_start_time) else timediff('24:00:00',timediff					(t2.trip_start_time,t2.trip_end_time))	end as time2,
+		case when t3.trip_start_time < t3.trip_end_time then timediff(t3.trip_end_time,t3.trip_start_time) else timediff('24:00:00',timediff					(t3.trip_start_time,t3.trip_end_time))	end as time3
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source 
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL') 
+		as time ) as min_time ) as out_min where rank_time = 1;
+
+3)Fetch itinerary details from CHN to NDL which have less dynamic pricing(assume current_date = 'Sunday')
+
+		select source,td1,ts2,td2,ts3,destination,cost from (
+		select source,td1,ts2,td2,ts3,destination,cost,dense_rank() over(partition by source,destination order by cost) as rank_time from(
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		t3.trip_cost+t2.trip_cost+t1.trip_cost as cost
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source 
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL' and t1.dynamic_fare='Y' and t2.dynamic_fare='Y' and t3.dynamic_fare='Y') 
+		as time ) as min_time where rank_time = 1;
+
++--------+------+------+------+------+-------------+-------+
+| source | td1  | ts2  | td2  | ts3  | destination | cost  |
++--------+------+------+------+------+-------------+-------+
+| CHN    | BGL  | BGL  | MUM  | MUM  | NDL         | 14700 |
++--------+------+------+------+------+-------------+-------+
+1 row in set (0.00 sec)
+
+4)Fetch itinerary details from CHN to NDL which happens on same day
+
+		select source,td1,ts2,td2,ts3,destination,add_time from(
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		addtime(addtime(timediff(t1.trip_end_time,t1.trip_start_time),timediff(t2.trip_end_time,t2.trip_start_time)),timediff							(t3.trip_end_time,t3.trip_start_time)) as add_time 
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source 
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL') 
+		as t where add_time>0;
+
++--------+------+------+------+------+-------------+----------+
+| source | td1  | ts2  | td2  | ts3  | destination | add_time |
++--------+------+------+------+------+-------------+----------+
+| CHN    | HYD  | HYD  | BGL  | BGL  | NDL         | 05:00:00 |
++--------+------+------+------+------+-------------+----------+
+1 row in set (0.00 sec)
+
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		addtime(addtime(abs(timediff(t1.trip_end_time,t1.trip_start_time)),abs(timediff(t2.trip_end_time,t2.trip_start_time))),abs(timediff					(t3.trip_end_time,t3.trip_start_time))) as add_time 
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL';
+
+5)Fetch itinerary details from CHN to NDL which have mimum wait time at transit
+
+		select source,td1,ts2,td2,ts3,destination,add_time from (
+		select source,td1,ts2,td2,ts3,destination,add_time,dense_rank() over(partition by source,destination order by add_time) as rank_time from(
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		addtime(abs(timediff(t1.trip_end_time,t2.trip_start_time)),abs(timediff(t2.trip_end_time,t3.trip_start_time))) as add_time 
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source 
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL') 
+		as t ) min_wait where rank_time = 1;
+
+    -> as t ) min_wait where rank_time = 1;
++--------+------+------+------+------+-------------+----------+
+| source | td1  | ts2  | td2  | ts3  | destination | add_time |
++--------+------+------+------+------+-------------+----------+
+| CHN    | BGL  | BGL  | MUM  | MUM  | NDL         | 06:20:00 |
++--------+------+------+------+------+-------------+----------+
+1 row in set (0.00 sec)
+
+6)Fetch return itinerary details from NDL to CHN with mimum transits
+7)Fetch itinerary details from CHN to BGL before 11 AM
+8)Fetch return itinerary details from NDL to CHN which happens on same day or which has less travel time
+9)Fetch trip details which have less travel time
+
+mysql> select trip_source,trip_dest from (select trip_id,trip_source,trip_dest,dense_rank() over(order by t_time) rank_time from(select trip_id,trip_source,trip_dest,time(abs(timediff(trip_end_time,trip_start_time))) as t_time from trip ) time ) time_min where rank_time=1;
++-------------+-----------+
+| trip_source | trip_dest |
++-------------+-----------+
+| BGL         | MUM       |
++-------------+-----------+
+1 row in set (0.00 sec)
+
+10)Fetch trip details which have high travel time and no dynamic pricing
+
+mysql> select trip_source,trip_dest from (select trip_id,trip_source,trip_dest,dense_rank() over(order by t_time desc) rank_time from(select trip_id,trip_source,trip_dest,time(abs(timediff(trip_end_time,trip_start_time))) as t_time from trip where dynamic_fare='N') time ) time_min where rank_time=1;
++-------------+-----------+
+| trip_source | trip_dest |
++-------------+-----------+
+| MUM         | BGL       |
++-------------+-----------+
+1 row in set (0.00 sec)
+
 
 SET - 3
 
 1)Fetch rows which have hottest month per city with highest rainfall
+
+mysql> select stats_id,city,month,year,temp_fare,rain_inch from (select stats_id,city,month,year,temp_fare,rain_inch,dense_rank() over(partition by city order by temp_fare desc) as rank_temp,dense_rank() over(partition by city order by rain_inch desc) as rank_rain from stats s join station s1 on s.stats_id=s1.station_id) as rain_temp where rank_temp=1 or rank_rain=1;
++----------+---------+-------+------+-----------+-----------+
+| stats_id | city    | month | year | temp_fare | rain_inch |
++----------+---------+-------+------+-----------+-----------+
+|       66 | Caribou |     7 | 2010 |      65.8 |      4.52 |
+|       44 | Denver  |     9 | 2010 |      27.2 |      3.45 |
+|       44 | Denver  |     6 | 2010 |      74.8 |      2.11 |
+|       13 | Phoenix |     9 | 2010 |     100.3 |     10.34 |
++----------+---------+-------+------+-----------+-----------+
+4 rows in set (0.00 sec)
+
 2)Fetch and display rows with Station_ID, City, State, Month, Year and temp(in Celcius), rainfall (in cm)
 
 mysql> select s.stats_id,s1.city,s1.state,s.month,s.year,round((rain_inch * 03937),2) as rain_cm,round(((temp_fare-32)*(5/9)),2) as temp_cel from stats s join station s1 on s.stats_id=s1.station_id;
@@ -165,15 +325,105 @@ mysql> select s.stats_id,s1.city,s1.state,s.month,s.year,round((rain_inch * 0393
 9 rows in set (0.07 sec)
 
 3)Display all rows for states on all quarters. If a state do not have any quarter information, default Temp in Celcius and rain in cms based on average for the year
+
+mysql> select stats_id,month,year,temp_fare,rain_inch,avg(case when status='less' then rain_inch end) over(partition by stats_id) as avrg from (select stats_id,month,year,temp_fare,rain_inch,count,case when count<4 then "less" else "more" end as status from (select stats_id,month,year,temp_fare,rain_inch,count(*) over(partition by stats_id)as count from stats) as l_m) as m_l;
++----------+-------+------+-----------+-----------+--------------------+
+| stats_id | month | year | temp_fare | rain_inch | avrg               |
++----------+-------+------+-----------+-----------+--------------------+
+|       13 |     1 | 2010 |      57.4 |      0.31 |               NULL |
+|       13 |     5 | 2010 |      91.7 |      5.15 |               NULL |
+|       13 |    12 | 2010 |      12.6 |      8.34 |               NULL |
+|       13 |     9 | 2010 |     100.3 |     10.34 |               NULL |
+|       44 |     9 | 2010 |      27.2 |      3.45 | 1.9133333166440327 |
+|       44 |     2 | 2010 |      27.3 |      0.18 | 1.9133333166440327 |
+|       44 |     6 | 2010 |      74.8 |      2.11 | 1.9133333166440327 |
+|       66 |     3 | 2010 |       6.7 |       2.1 |  3.309999942779541 |
+|       66 |     7 | 2010 |      65.8 |      4.52 |  3.309999942779541 |
++----------+-------+------+-----------+-----------+--------------------+
+9 rows in set (0.00 sec)
+
 4)Which state has coldest month and highest rainfall compared to average per year
+
+select city,state,rain_inch,avg_rain,avg_temp from (select city,state,temp_fare,rain_inch,avg_rain,avg_temp,dense_rank() over(partition by state order by avg_rain desc,avg_temp desc) rank_avg from (select city,state,temp_fare,rain_inch,avg(rain_inch) over() as avg_rain,avg(temp_fare) over() as avg_temp from stats s join station s1 on s.stats_id=s1.station_id) as rain_temp where avg_rain<rain_inch and avg_temp > temp_fare) as max_rain where rank_avg=1;
+
+mysql> select city,state,rain_inch,avg_rain,avg_temp from (select city,state,temp_fare,rain_inch,avg_rain,avg_temp,dense_rank() over(order by avg_rain desc,avg_temp desc) rank_avg from (select city,state,temp_fare,rain_inch,avg(rain_inch) over() as avg_rain,avg(temp_fare) over() as avg_temp from stats s join station s1 on s.stats_id=s1.station_id) as rain_temp where avg_rain<rain_inch and avg_temp > temp_fare) as max_rain where rank_avg=1;
++---------+-------+-----------+-------------------+------------------+
+| city    | state | rain_inch | avg_rain          | avg_temp         |
++---------+-------+-----------+-------------------+------------------+
+| Phoenix | AZ    |      8.34 | 4.055555582046509 | 51.5333342022366 |
++---------+-------+-----------+-------------------+------------------+
+1 row in set (0.00 sec)
+
 5)Which city had maximum rainfall below average . Display city, state, rainfall, average information
+mysql> select city,state,rain_inch,avg_rain from (select city,state,rain_inch,avg_rain,dense_rank() over(partition by city order by avg_rain desc) rank_avg from (select city,state,rain_inch,avg(rain_inch) over(partition by city) as avg_rain from stats s join station s1 on s.stats_id=s1.station_id) as rain where avg_rain>rain_inch) as max_rain where rank_avg=1;
++---------+-------+-----------+--------------------+
+| city    | state | rain_inch | avg_rain           |
++---------+-------+-----------+--------------------+
+| Caribou | ME    |       2.1 |  3.309999942779541 |
+| Denver  | CO    |      0.18 | 1.9133333166440327 |
+| Phoenix | AZ    |      0.31 |   6.03500010073185 |
+| Phoenix | AZ    |      5.15 |   6.03500010073185 |
++---------+-------+-----------+--------------------+
+4 rows in set (0.00 sec)
+
+mysql> select city,state,rain_inch,avg_rain from (select city,state,rain_inch,avg_rain,dense_rank() over(partition by city order by rain_inch desc) rank_avg from (select city,state,rain_inch,avg(rain_inch) over() as avg_rain from stats s join station s1 on s.stats_id=s1.station_id) as rain where avg_rain>rain_inch) as max_rain where rank_avg=1;
++---------+-------+-----------+-------------------+
+| city    | state | rain_inch | avg_rain          |
++---------+-------+-----------+-------------------+
+| Caribou | ME    |       2.1 | 4.055555582046509 |
+| Denver  | CO    |      3.45 | 4.055555582046509 |
+| Phoenix | AZ    |      0.31 | 4.055555582046509 |
++---------+-------+-----------+-------------------+
+3 rows in set (0.00 sec)
+
+mysql> select city,state,rain_inch,avg_rain from (select city,state,rain_inch,avg_rain,dense_rank() over(order by rain_inch desc) rank_avg from (select city,state,rain_inch,avg(rain_inch) over() as avg_rain from stats s join station s1 on s.stats_id=s1.station_id) as rain where avg_rain>rain_inch) as max_rain where rank_avg=1;
++--------+-------+-----------+-------------------+
+| city   | state | rain_inch | avg_rain          |
++--------+-------+-----------+-------------------+
+| Denver | CO    |      3.45 | 4.055555582046509 |
++--------+-------+-----------+-------------------+
+1 row in set (0.00 sec)
+
 6)Which city had second  coldest month when compared to national average
+
+mysql> select stats_id,month,temp_fare from (select stats_id,month,temp_fare,avg_temp,dense_rank() over(order by temp_fare) as min_temp from (select stats_id,month,temp_fare,avg(temp_fare) over() avg_temp from stats s join station s1 on s.stats_id=s1.station_id) as avg_temp where temp_fare < avg_temp ) as temp where min_temp = 2;
++----------+-------+-----------+
+| stats_id | month | temp_fare |
++----------+-------+-----------+
+|       13 |    12 |      12.6 |
++----------+-------+-----------+
+1 row in set (0.00 sec)
+
 7)create a view based on question#3. If you query view, you should have resultset matching with question #3
 8)Report stations which had temperature difference < 5 C  or difference > 20 C in subsequent quarters
 9)Report stations which obsevered temperatures less than 0(in celcius)
-10)Display state information and number of times when rainfall is greater than national avergae
+
+mysql> select stats_id,city,state from stats s join station s1 on s.stats_id=s1.station_id where ((temp_fare-32)*(5/9)) < 0;
++----------+---------+-------+
+| stats_id | city    | state |
++----------+---------+-------+
+|       13 | Phoenix | AZ    |
+|       44 | Denver  | CO    |
+|       44 | Denver  | CO    |
+|       66 | Caribou | ME    |
++----------+---------+-------+
+4 rows in set (0.00 sec)
+
+10)Display state information and number of times when rainfall is greater than national average
+
+mysql> select state,city,count(city) count from(select stats_id,state,city,rain_inch,avg_rain from (select stats_id,state,city,rain_inch,avg(rain_inch) over() as avg_rain from station s join stats s1 on s1.stats_id=s.station_id) as rain where rain_inch > avg_rain) as count_city group by state,city;
++-------+---------+-------+
+| state | city    | count |
++-------+---------+-------+
+| AZ    | Phoenix |     3 |
+| ME    | Caribou |     1 |
++-------+---------+-------+
+2 rows in set (0.00 sec)
 
 
 
 select publish_id,author_name,author_country,publish_city,publish_start_date,branches from (select publish_id,author_name,author_country,publish_city,publish_start_date,branches,date,dense_rank() over(partition by date order by branches desc) as rank1 from(select a.publish_id,a.author_name,a.author_country,p.publish_city,p.publish_start_date ,p.branches, case when p.publish_start_date then round(date_format(p.publish_start_date,'%Y')/100) end as date from publish p join author a on p.publish_id=a.publish_id) as max_branch) as branches where rank1=1;
+
+
+
 
