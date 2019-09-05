@@ -1,0 +1,62 @@
+create table project1 (proj_id integer,proj_name varchar(30));
+
+insert into project1 values(1,'Neon Data & Analytics');
+insert into project1 values(2,'ASG Data Warehousing');
+insert into project1 values(3,'Pepsi Data Mart');
+insert into project1 values(4,'Microsoft');
+insert into project1 values(5,'Amazon Cloud Logistics');
+insert into project1 values(10,'Flipkart');
+
+
+1)mysql> select empid,empname,desc_name1,place_desc1,proj_name1,count(empid) over(partition by desc_name1) as desc_count,count(empid) over(partition by place_desc1) as count_place from ( select e.emp_id empid,e.emp_name empname,coalesce(d.desc_name,"others") as desc_name1,coalesce(p.place_desc,"Others") as place_desc1,coalesce(p1.proj_name,"others") as proj_name1  from employee e left join designation d on e.desc_id=d.desc_id left join place p on e.place_id=p.place_id left join project1 p1 on e.proj_id=p1.proj_id order by e.emp_id ) table1;
++-------+---------------+------------+-------------+------------------------+------------+-------------+
+| empid | empname       | desc_name1 | place_desc1 | proj_name1             | desc_count | count_place |
++-------+---------------+------------+-------------+------------------------+------------+-------------+
+|     1 | Vijaykumar    | ASE        | Chennai     | Pepsi Data Mart        |          3 |           2 |
+|     2 | Raja          | SE         | Hyderabad   | Microsoft              |          3 |           3 |
+|     3 | Abhisheksingh | ASE        | Mexico      | Amazon Cloud Logistics |          3 |           1 |
+|     4 | Santosh       | SSE        | Bangalore   | Neon Data & Analytics  |          2 |           2 |
+|     5 | Kribakaran    | SE         | Hyderabad   | ASG Data Warehousing   |          3 |           3 |
+|     6 | Divya         | TL         | Newyork     | Pepsi Data Mart        |          1 |           2 |
+|     7 | Suganya       | ASE        | Hyderabad   | Microsoft              |          3 |           3 |
+|     8 | Shalini       | SE         | Bangalore   | ASG Data Warehousing   |          3 |           2 |
+|     9 | Avantika      | SSE        | Chennai     | Amazon Cloud Logistics |          2 |           2 |
+|    10 | Ajay          | AM         | Others      | others                 |          1 |           5 |
+|    11 | Tamilselvan   | others     | Others      | others                 |          5 |           5 |
+|    12 | Vinodha       | others     | Others      | others                 |          5 |           5 |
+|    13 | Karthick      | others     | Newyork     | ASG Data Warehousing   |          5 |           2 |
+|    14 | Sanjay        | others     | Others      | Amazon Cloud Logistics |          5 |           5 |
+|    15 | Meera         | others     | Others      | others                 |          5 |           5 |
++-------+---------------+------------+-------------+------------------------+------------+-------------+
+15 rows in set (0.00 sec)
+
+2)mysql> select e.emp_id empid,e.emp_name empname,coalesce(d.desc_name,"others") as desc_name1,coalesce(p.place_desc,"Others") as place_desc1,coalesce(p1.proj_name,"others") as proj_name1  from employee e left join designation d on e.desc_id=d.desc_id left join place p on e.place_id=p.place_id left join project1 p1 on e.proj_id=p1.proj_id  where p1.proj_name like '%data%' or p1.proj_name like '%cloud%' order by e.emp_id;
++-------+---------------+------------+-------------+------------------------+
+| empid | empname       | desc_name1 | place_desc1 | proj_name1             |
++-------+---------------+------------+-------------+------------------------+
+|     1 | Vijaykumar    | ASE        | Chennai     | Pepsi Data Mart        |
+|     3 | Abhisheksingh | ASE        | Mexico      | Amazon Cloud Logistics |
+|     4 | Santosh       | SSE        | Bangalore   | Neon Data & Analytics  |
+|     5 | Kribakaran    | SE         | Hyderabad   | ASG Data Warehousing   |
+|     6 | Divya         | TL         | Newyork     | Pepsi Data Mart        |
+|     8 | Shalini       | SE         | Bangalore   | ASG Data Warehousing   |
+|     9 | Avantika      | SSE        | Chennai     | Amazon Cloud Logistics |
+|    13 | Karthick      | others     | Newyork     | ASG Data Warehousing   |
+|    14 | Sanjay        | others     | Others      | Amazon Cloud Logistics |
++-------+---------------+------------+-------------+------------------------+
+9 rows in set (0.00 sec)
+
+3)mysql> select empid,empname,desc_name,place_desc,proj_name from (select e.emp_id empid,e.emp_name empname,d.desc_name desc_name,p.place_desc place_desc,p1.proj_name proj_name,dense_rank() over(partition by p.place_desc order by d.desc_id desc,p1.proj_id) as rank_desc from employee e join designation d on e.desc_id=d.desc_id join place p on e.place_id=p.place_id join project1 p1 on e.proj_id=p1.proj_id ) table1 where rank_desc = 1;
++-------+---------------+-----------+------------+------------------------+
+| empid | empname       | desc_name | place_desc | proj_name              |
++-------+---------------+-----------+------------+------------------------+
+|     4 | Santosh       | SSE       | Bangalore  | Neon Data & Analytics  |
+|     9 | Avantika      | SSE       | Chennai    | Amazon Cloud Logistics |
+|     5 | Kribakaran    | SE        | Hyderabad  | ASG Data Warehousing   |
+|     3 | Abhisheksingh | ASE       | Mexico     | Amazon Cloud Logistics |
+|     6 | Divya         | TL        | Newyork    | Pepsi Data Mart        |
++-------+---------------+-----------+------------+------------------------+
+5 rows in set (0.00 sec)
+
+4) 
+select distinct s1.salesman_name,s.salesman_name as sales_manager_name,s.monthly_target,sum(c.purchased_amount) over(partition by s.salesman_id)as amount_purchased_by_customer from salesman s join salesman s1 on s.salesman_id=s1.sales_manager_id join customer c on s1.salesman_id=c.salesman_id;

@@ -86,6 +86,9 @@ mysql> select a1.author_id,a1.author_name,p1.publish_id,p1.publish_name,p1.publi
 4 rows in set (0.00 sec)
 
 4)Fetch authors who have incorrect author_country for same author_city. Display correct author_country along with all author_information
+
+
+
 5)Fetch authors who do not have publisher from their country
 
 mysql> select a1.author_id,a1.author_name,a1.author_country,a1.author_city,p1.publish_id,p1.publish_name,p1.publish_city from author a join publish p on a.publish_id=p.publish_id and a.author_city = p.publish_city right join author a1 on a.author_country=a1.author_country join publish p1 on a1.publish_id=p1.publish_id where p.publish_id is null;
@@ -152,6 +155,34 @@ mysql> select p.publish_name,p.publish_city,p.publish_start_date,a.author_id,a.a
 
 
 11)Fetch count of authors belong to same continent(eg. Berlin -> Europe)
+
+mysql> select author_country,author_city,continent,count(continent) over(partition by continent) from (select author_country,author_city,case when author_country in ('UK','GERMANY','EUROPE') then "EUROPE" when author_country in ('RUSSIA','INDIA') then "ASIA" when author_country in ('USA','CANADA') then "USA" when author_country in ('Australia') then "AUSTRALIA" end as continent  from author a join publish p on a.publish_id = p.publish_id) as count_author;
++----------------+---------------+-----------+-----------------------------------------------+
+| author_country | author_city   | continent | count(continent) over(partition by continent) |
++----------------+---------------+-----------+-----------------------------------------------+
+| RUSSIA         | Moscow        | ASIA      |                                             2 |
+| INDIA          | Delhi         | ASIA      |                                             2 |
+| Australia      | Melbourne     | AUSTRALIA |                                             1 |
+| UK             | Cambridge     | EUROPE    |                                             4 |
+| UK             | London        | EUROPE    |                                             4 |
+| EUROPE         | Berlin        | EUROPE    |                                             4 |
+| GERMANY        | Berlin        | EUROPE    |                                             4 |
+| USA            | San Francisco | USA       |                                             3 |
+| CANADA         | Toronto       | USA       |                                             3 |
+| USA            | New Jersy     | USA       |                                             3 |
++----------------+---------------+-----------+-----------------------------------------------+
+10 rows in set (0.00 sec)
+
+mysql> select continent,count(continent) from (select author_country,case when author_country in ('UK','GERMANY','EUROPE') then "EUROPE" when author_country in ('RUSSIA','INDIA') then "ASIA" when author_country in ('USA','CANADA') then "USA" when author_country in ('Australia') then "AUSTRALIA" end as continent  from author a join publish p on a.publish_id = p.publish_id) as count_author group by continent;
++-----------+------------------+
+| continent | count(continent) |
++-----------+------------------+
+| EUROPE    |                4 |
+| USA       |                3 |
+| ASIA      |                2 |
+| AUSTRALIA |                1 |
++-----------+------------------+
+4 rows in set (0.00 sec)
 
 SET - 2
 
@@ -268,8 +299,85 @@ mysql> select source,td1,ts2,td2,ts3,destination,cost from (select source,td1,ts
 1 row in set (0.00 sec)
 
 6)Fetch return itinerary details from NDL to CHN with mimum transits
+
+select ts1,td1,ts2,td2,ts3,td3 from (
+select ts1,td1,ts2,td2,ts3,td3,dense_rank() over(order by count) as rank_count from (
+select ts1,td1,ts2,td2,ts3,td3,
+case when td2 is null and ts3 is null then 0 
+when td2 is not null and ts3 is null then 1 
+when td2 is not null and ts3 is not null then 2 end as count from (
+select distinct t1.trip_source ts1,t1.trip_dest td1,
+t2.trip_source ts2,t2.trip_dest td2,
+case when t2.trip_dest='CHN' then NULL else t3.trip_source end as ts3,
+case when t2.trip_dest='CHN' then NULL else t3.trip_dest end as td3
+from trip t1 join trip t2 on t1.trip_dest=t2.trip_source join trip t3 on t2.trip_dest=t3.trip_source 
+where (t1.trip_source = 'NDL' and t3.trip_dest='CHN') or (t1.trip_source='NDL' and t2.trip_dest='CHN') )as mid ) as mid_count ) final where rank_count=1;
+
++------+------+------+------+------+------+
+| ts1  | td1  | ts2  | td2  | ts3  | td3  |
++------+------+------+------+------+------+
+| NDL  | HYD  | HYD  | CHN  | NULL | NULL |
++------+------+------+------+------+------+
+1 row in set (0.00 sec)
+
 7)Fetch itinerary details from CHN to BGL before 11 AM
+
+select ts1,td1,st1,et1,ts2,td2,st2,et2 from (
+select distinct t1.trip_source ts1,t1.trip_dest td1,t1.trip_start_time st1,t1.trip_end_time et1,
+case when t1.trip_dest='BGL' then "NULL" else t2.trip_source end as ts2,
+case when t1.trip_dest='BGL' then "NULL" else t2.trip_dest end as td2,
+case when t1.trip_dest='BGL' then "00:00:00" else t2.trip_start_time end as st2,
+case when t1.trip_dest='BGL' then "00:00:00" else t2.trip_end_time end as et2
+from trip t1 join trip t2 on t1.trip_dest=t2.trip_source  
+where (t1.trip_source = 'CHN' and t1.trip_dest='BGL') or (t1.trip_source='CHN' and t2.trip_dest='BGL') ) as time where st1 < '11:00:00';
+
++------+------+----------+----------+------+------+----------+----------+
+| ts1  | td1  | st1      | et1      | ts2  | td2  | st2      | et2      |
++------+------+----------+----------+------+------+----------+----------+
+| CHN  | HYD  | 09:45:00 | 11:10:00 | HYD  | BGL  | 12:20:00 | 13:25:00 |
++------+------+----------+----------+------+------+----------+----------+
+1 row in set (0.00 sec)
+
+select ts1,td1,st1,et1,ts2,td2,st2,et2 from (
+select distinct t1.trip_source ts1,t1.trip_dest td1,t1.trip_start_time st1,t1.trip_end_time et1,
+case when t1.trip_dest='BGL' then "NULL" else t2.trip_source end as ts2,
+case when t1.trip_dest='BGL' then "NULL" else t2.trip_dest end as td2,
+case when t1.trip_dest='BGL' then "00:00:00" else t2.trip_start_time end as st2,
+case when t1.trip_dest='BGL' then "00:00:00" else t2.trip_end_time end as et2
+from trip t1 join trip t2 on t1.trip_dest=t2.trip_source  
+where (t1.trip_source = 'CHN' and t1.trip_dest='BGL') or (t1.trip_source='CHN' and t2.trip_dest='BGL') 
+) as time where st1 < '11:00:00' and st2 < '11:00:00';
+Empty set (0.00 sec)
+
 8)Fetch return itinerary details from NDL to CHN which happens on same day or which has less travel time
+
+select ts1,td1,ts2,td2,ts3,td3,time,add_time from (
+select ts1,td1,ts2,td2,ts3,td3,time,add_time,dense_rank() over(order by add_time) rank_time from (
+select ts1,td1,ts2,td2,ts3,td3,time,addtime(addtime(time1,time2),time3) as add_time from (
+select ts1,td1,ts2,td2,ts3,td3,case when ts3='NULL' then timediff(et2,st1)  else timediff(et3,st1) end as time,
+case when st1 < et1 then timediff(et1,st1) else timediff('24:00:00',timediff(st1,et1))	end as time1,
+case when st2 < et2 then timediff(et2,st2) else timediff('24:00:00',timediff(st2,et2))	end as time2,
+case when td2='CHN' then "00:00:00" when st3 < et3 then timediff(et3,st3) else timediff('24:00:00',timediff(st3,et3)) end as time3 from (
+select distinct t1.trip_source ts1,t1.trip_dest td1,t1.trip_start_time st1,t1.trip_end_time et1,
+t2.trip_source ts2,t2.trip_dest td2,t2.trip_start_time st2,t2.trip_end_time et2,
+case when t2.trip_dest='CHN' then "NULL" else t3.trip_source end as ts3,
+case when t2.trip_dest='CHN' then "NULL" else t3.trip_dest end as td3,
+case when t2.trip_dest='CHN' then "00:00:00" else t3.trip_start_time end as st3,
+case when t2.trip_dest='CHN' then "00:00:00" else t3.trip_end_time end as et3
+from trip t1 join trip t2 on t1.trip_dest=t2.trip_source join trip t3 on t2.trip_dest=t3.trip_source 
+where (t1.trip_source = 'NDL' and t3.trip_dest='CHN') or (t1.trip_source='NDL' and t2.trip_dest='CHN') 
+) as time 
+) as mid1
+) as mid
+) as final where time > 0 or rank_time = 1;
+
++------+------+------+------+------+------+-----------------+-----------------+
+| ts1  | td1  | ts2  | td2  | ts3  | td3  | time            | add_time        |
++------+------+------+------+------+------+-----------------+-----------------+
+| NDL  | HYD  | HYD  | CHN  | NULL | NULL | 10:55:00.000000 | 04:10:00.000000 |
++------+------+------+------+------+------+-----------------+-----------------+
+1 row in set (0.00 sec)
+
 9)Fetch trip details which have less travel time
 
 mysql> select trip_source,trip_dest from (select trip_id,trip_source,trip_dest,dense_rank() over(order by t_time) rank_time from(select trip_id,trip_source,trip_dest,time(abs(timediff(trip_end_time,trip_start_time))) as t_time from trip ) time ) time_min where rank_time=1;
@@ -396,6 +504,22 @@ mysql> select stats_id,month,temp_fare from (select stats_id,month,temp_fare,avg
 
 7)create a view based on question#3. If you query view, you should have resultset matching with question #3
 8)Report stations which had temperature difference < 5 C  or difference > 20 C in subsequent quarters
+
+select stats_id,city,state,month,temp_fare,rain_inch from (
+select stats_id,city,state,month,temp_fare,rain_inch,case when temp_celcius < lead_temp then lead_temp-temp_celcius else temp_celcius-lead_temp end as diff_temp from (select stats_id,city,state,month,temp_fare,rain_inch,temp_celcius,round(lead(temp_celcius) over(partition by stats_id order by month),2) lead_temp from ( select stats_id,city,state,month,temp_fare,((temp_fare-32) * (5/9)) temp_celcius,rain_inch from stats s join station s1 on s.stats_id=s1.station_id) as temp ) as lead_val ) as final where diff_temp < 5 or diff_temp > 20;
+
++----------+---------+-------+-------+-----------+-----------+
+| stats_id | city    | state | month | temp_fare | rain_inch |
++----------+---------+-------+-------+-----------+-----------+
+|       13 | Phoenix | AZ    |     5 |      91.7 |      5.15 |
+|       13 | Phoenix | AZ    |     9 |     100.3 |     10.34 |
+|       44 | Denver  | CO    |     2 |      27.3 |      0.18 |
+|       44 | Denver  | CO    |     6 |      74.8 |      2.11 |
+|       66 | Caribou | ME    |     3 |       6.7 |       2.1 |
++----------+---------+-------+-------+-----------+-----------+
+5 rows in set (0.00 sec)
+
+
 9)Report stations which obsevered temperatures less than 0(in celcius)
 
 mysql> select stats_id,city,state from stats s join station s1 on s.stats_id=s1.station_id where ((temp_fare-32)*(5/9)) < 0;
@@ -419,11 +543,3 @@ mysql> select state,city,count(city) count from(select stats_id,state,city,rain_
 | ME    | Caribou |     1 |
 +-------+---------+-------+
 2 rows in set (0.00 sec)
-
-
-
-select publish_id,author_name,author_country,publish_city,publish_start_date,branches from (select publish_id,author_name,author_country,publish_city,publish_start_date,branches,date,dense_rank() over(partition by date order by branches desc) as rank1 from(select a.publish_id,a.author_name,a.author_country,p.publish_city,p.publish_start_date ,p.branches, case when p.publish_start_date then round(date_format(p.publish_start_date,'%Y')/100) end as date from publish p join author a on p.publish_id=a.publish_id) as max_branch) as branches where rank1=1;
-
-
-
-
