@@ -104,6 +104,28 @@ mysql> select a1.author_id,a1.author_name,a1.author_country,a1.author_city,p1.pu
 +-----------+----------------------+----------------+-------------+------------+--------------------------+--------------+
 6 rows in set (0.00 sec)
 
+select author_name,author_country,author_city from (
+select distinct a.author_name author_name,a.author_country author_country,a.author_city author_city,a.publish_id,p.publish_city,
+case when a1.author_country is null then "OTHERS" when a1.author_country is not null and a1.author_country="EUROPE" then "GERMANY" else a1.author_country end as author_country1,
+case when a1.author_city is null then "OTHERS" else a1.author_city end as author_city1
+from author a join publish p on a.publish_id = p.publish_id 
+join publish p1 on p.publish_id=p1.publish_id 
+left join author a1 on p1.publish_city=a1.author_city ) as final where author_country != author_country1;
+
++----------------------+----------------+-------------+
+| author_name          | author_country | author_city |
++----------------------+----------------+-------------+
+| John Betjeman Hunter | CANADA         | Toronto     |
+| E. Howard            | EUROPE         | Berlin      |
+| William Norton       | UK             | Cambridge   |
+| John Betjeman Hunter | RUSSIA         | Moscow      |
+| S.B.Swaminathan      | INDIA          | Delhi       |
+| Drek Tailor          | Australia      | Melbourne   |
+| Andrew Jeff          | GERMANY        | Berlin      |
++----------------------+----------------+-------------+
+7 rows in set (0.00 sec)
+
+
 6)Fetch author details if first character of publisher name is same as author_name
 
 mysql> select author_name,publish_name from author a join publish p on a.publish_id=p.publish_id where substring(author_name,1,1)=substring(publish_name,1,1);
@@ -143,6 +165,24 @@ mysql> select author_name from author where locate('.',author_name)=0;
 7 rows in set (0.00 sec)
 
 9)Fetch author details who have lower case in author_name
+
+mysql> select author_country from author where binary(author_country) rlike '[a-z]';
++----------------+
+| author_country |
++----------------+
+| Australia      |
++----------------+
+1 row in set (0.00 sec)
+
+mysql> select author_country from author where binary(author_country) regexp '[a-z]';
++----------------+
+| author_country |
++----------------+
+| Australia      |
++----------------+
+1 row in set (0.00 sec)
+
+
 10)Fetch author information and publisher information who have publisher with recent publish_start_date.
 
 mysql> select p.publish_name,p.publish_city,p.publish_start_date,a.author_id,a.author_name,a.author_country,a.author_city from publish p join author a on p.publish_id=a.publish_id where date_format(current_date,'%Y')=date_format(publish_start_date,'%Y') order by p.publish_name;
@@ -249,6 +289,27 @@ mysql> select source,td1,ts2,td2,ts3,destination,cost from (select source,td1,ts
 | CHN    | BGL  | BGL  | MUM  | MUM  | NDL         | 14700 |
 +--------+------+------+------+------+-------------+-------+
 1 row in set (0.00 sec)
+		
+		select source,td1,ts2,td2,ts3,destination,dynamic_cost from (
+		select source,td1,ts2,td2,ts3,destination,dynamic_cost,dense_rank() over(order by dynamic_cost) as rank_dynamic from (
+		select source,td1,ts2,td2,ts3,destination,(tc1+tc2+tc3) as dynamic_cost from (
+		select  t1.trip_source source,t1.trip_dest td1,
+		t2.trip_source ts2,t2.trip_dest td2,
+		t3.trip_source ts3,t3.trip_dest destination,
+		case when t1.dynamic_fare = 'Y' then t1.trip_cost else 0 end as tc1,
+		case when t2.dynamic_fare = 'Y' then t2.trip_cost else 0 end as tc2,
+		case when t3.dynamic_fare = 'Y' then t3.trip_cost else 0 end as tc3
+		from trip t1 join trip t2 on t1.trip_dest=t2.trip_source 
+		join trip t3 on t2.trip_dest=t3.trip_source 
+		where t1.trip_source='CHN' and t3.trip_dest='NDL' ) as change1 ) as change2 ) as final where rank_dynamic = 1;
+
++--------+------+------+------+------+-------------+--------------+
+| source | td1  | ts2  | td2  | ts3  | destination | dynamic_cost |
++--------+------+------+------+------+-------------+--------------+
+| CHN    | HYD  | HYD  | BGL  | BGL  | NDL         |         3000 |
++--------+------+------+------+------+-------------+--------------+
+1 row in set (0.00 sec)
+
 
 4)Fetch itinerary details from CHN to NDL which happens on same day
 
@@ -543,3 +604,7 @@ mysql> select state,city,count(city) count from(select stats_id,state,city,rain_
 | ME    | Caribou |     1 |
 +-------+---------+-------+
 2 rows in set (0.00 sec)
+
+
+select stats_id,month,year,
+case when month in (1,2,3) then "Q1" when month in (4,5,6) then "Q2" when month in (7,8,9) then "Q3" when month in (10,11,12) then "Q4" end as quaters from stats s join station s1 on s.stats_id=s1.station_id;
