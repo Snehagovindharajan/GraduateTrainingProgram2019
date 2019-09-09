@@ -511,6 +511,37 @@ mysql> select stats_id,month,year,temp_fare,rain_inch,avg(case when status='less
 +----------+-------+------+-----------+-----------+--------------------+
 9 rows in set (0.00 sec)
 
+****Create a New Table Stats1****
+
+select stats_id,month,year,round(coalesce(temp_fare,temp_fare1),2) as temp_fare,round(coalesce(rain_inch,rain_inch1),2) as rain_inch from (
+select stats_id,month,year,temp_fare,rain_inch,avg(temp_fare) over(partition by stats_id) as temp_fare1,
+avg(rain_inch) over(partition by stats_id) as rain_inch1
+from ( 
+select case when s2.stats_id is null then s1.stats_id else s2.stats_id end as stats_id,
+case when s2.month is null then s1.month else s2.month end as month,
+case when s2.year is null then s1.year else s2.year end as year,
+s2.temp_fare temp_fare,
+s2.rain_inch rain_inch
+from stats1 s1 left join stats s2 on s1.stats_id=s2.stats_id and s1.month=s2.month ) as mid ) as final;
+
++----------+-------+------+-----------+-----------+
+| stats_id | month | year | temp_fare | rain_inch |
++----------+-------+------+-----------+-----------+
+|       13 |     1 | 2010 |     57.40 |      0.31 |
+|       13 |     5 | 2010 |     91.70 |      5.15 |
+|       13 |    12 | 2010 |     12.60 |      8.34 |
+|       13 |     9 | 2010 |    100.30 |     10.34 |
+|       44 |     9 | 2010 |     27.20 |      3.45 |
+|       44 |     2 | 2010 |     27.30 |      0.18 |
+|       44 |     6 | 2010 |     74.80 |      2.11 |
+|       44 |    11 | 2010 |     43.10 |      1.91 |
+|       66 |     3 | 2010 |      6.70 |      2.10 |
+|       66 |     7 | 2010 |     65.80 |      4.52 |
+|       66 |     6 | 2010 |     36.25 |      3.31 |
+|       66 |    10 | 2010 |     36.25 |      3.31 |
++----------+-------+------+-----------+-----------+
+12 rows in set (0.00 sec)
+
 4)Which state has coldest month and highest rainfall compared to average per year
 
 select city,state,rain_inch,avg_rain,avg_temp from (select city,state,temp_fare,rain_inch,avg_rain,avg_temp,dense_rank() over(partition by state order by avg_rain desc,avg_temp desc) rank_avg from (select city,state,temp_fare,rain_inch,avg(rain_inch) over() as avg_rain,avg(temp_fare) over() as avg_temp from stats s join station s1 on s.stats_id=s1.station_id) as rain_temp where avg_rain<rain_inch and avg_temp > temp_fare) as max_rain where rank_avg=1;
