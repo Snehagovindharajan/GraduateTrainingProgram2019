@@ -580,6 +580,20 @@ select stats_id,city,state,month,temp_fare,rain_inch,case when temp_celcius < le
 +----------+---------+-------+-------+-----------+-----------+
 5 rows in set (0.00 sec)
 
+select stats_id,city,state,month,temp_fare,rain_inch from (
+select stats_id,city,state,month,temp_fare,rain_inch,temp_celcius-lead_temp as diff_temp from (select stats_id,city,state,month,temp_fare,rain_inch,temp_celcius,round(lead(temp_celcius) over(partition by stats_id order by month),2) lead_temp from ( select stats_id,city,state,month,temp_fare,((temp_fare-32) * (5/9)) temp_celcius,rain_inch from stats s join station s1 on s.stats_id=s1.station_id) as temp ) as lead_val ) as final where diff_temp < 5 or diff_temp > 20;
+
++----------+---------+-------+-------+-----------+-----------+
+| stats_id | city    | state | month | temp_fare | rain_inch |
++----------+---------+-------+-------+-----------+-----------+
+|       13 | Phoenix | AZ    |     1 |      57.4 |      0.31 |
+|       13 | Phoenix | AZ    |     5 |      91.7 |      5.15 |
+|       13 | Phoenix | AZ    |     9 |     100.3 |     10.34 |
+|       44 | Denver  | CO    |     2 |      27.3 |      0.18 |
+|       44 | Denver  | CO    |     6 |      74.8 |      2.11 |
+|       66 | Caribou | ME    |     3 |       6.7 |       2.1 |
++----------+---------+-------+-------+-----------+-----------+
+6 rows in set (0.00 sec)
 
 9)Report stations which obsevered temperatures less than 0(in celcius)
 
