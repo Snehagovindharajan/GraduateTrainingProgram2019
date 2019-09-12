@@ -513,7 +513,7 @@ mysql> select stats_id,month,year,temp_fare,rain_inch,avg(case when status='less
 
 ****Create a New Table Stats1****
 
-select stats_id,month,year,round(coalesce(temp_fare,temp_fare1),2) as temp_fare,round(coalesce(rain_inch,rain_inch1),2) as rain_inch from (
+select stats_id,month,year,(round(coalesce(temp_fare,temp_fare1),2)- 32) * (5/9) as temp_fare,(round(coalesce(rain_inch,rain_inch1),2)) * 03937 as rain_inch from (
 select stats_id,month,year,temp_fare,rain_inch,avg(temp_fare) over(partition by stats_id) as temp_fare1,
 avg(rain_inch) over(partition by stats_id) as rain_inch1
 from ( 
@@ -539,6 +539,24 @@ from stats1 s1 left join stats s2 on s1.stats_id=s2.stats_id and s1.month=s2.mon
 |       66 |     7 | 2010 |     65.80 |      4.52 |
 |       66 |     6 | 2010 |     36.25 |      3.31 |
 |       66 |    10 | 2010 |     36.25 |      3.31 |
++----------+-------+------+-----------+-----------+
+12 rows in set (0.00 sec)
+
++----------+-------+------+-----------+-----------+
+| stats_id | month | year | temp_fare | rain_inch |
++----------+-------+------+-----------+-----------+
+|       13 |     1 | 2010 |   14.1111 |   1220.47 |
+|       13 |     5 | 2010 |   33.1667 |  20275.55 |
+|       13 |    12 | 2010 |  -10.7778 |  32834.58 |
+|       13 |     9 | 2010 |   37.9444 |  40708.58 |
+|       44 |     9 | 2010 |   -2.6667 |  13582.65 |
+|       44 |     2 | 2010 |   -2.6111 |    708.66 |
+|       44 |     6 | 2010 |   23.7778 |   8307.07 |
+|       44 |    11 | 2010 |    6.1667 |   7519.67 |
+|       66 |     3 | 2010 |  -14.0556 |   8267.70 |
+|       66 |     7 | 2010 |   18.7778 |  17795.24 |
+|       66 |     6 | 2010 |    2.3611 |  13031.47 |
+|       66 |    10 | 2010 |    2.3611 |  13031.47 |
 +----------+-------+------+-----------+-----------+
 12 rows in set (0.00 sec)
 

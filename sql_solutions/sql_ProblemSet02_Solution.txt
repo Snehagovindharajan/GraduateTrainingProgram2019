@@ -254,6 +254,15 @@ mysql> select name from plant p join planted p1 on p.plantid=p1.plantid where da
 +--------+
 2 rows in set (0.07 sec)
 
+mysql> select name from plant p join planted p1 on p.plantid=p1.plantid where date_format(date1,"%d %M %Y") like '%14%APR%';
++--------+
+| name   |
++--------+
+| Carrot |
+| Corn   |
++--------+
+2 rows in set (0.00 sec)
+
 5. List the amount of sunlight and water to all plants with names that start with letter  'c' or letter 'r'. 
 
 mysql> select name,sunlight,water from plant where name like 'c%' or name like 'r%';

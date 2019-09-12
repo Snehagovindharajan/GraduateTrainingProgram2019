@@ -57,7 +57,7 @@ height = 12.0
 delimiter = '.'
 For each of the following expressions, write the value of the expression and the type (of the value of
 the expression).
-
+    
 ```python
 >>> width/2
 >>> width/2.0
