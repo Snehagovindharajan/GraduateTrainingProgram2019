@@ -73,10 +73,10 @@ x = 25
 epsilon = 0.01
 numGuesses = 0
 low = 0.0
-high = max(1.0, x)
-ans = (high + low)/2.0
+high = max(1.0, x) #25
+ans = (high + low)/2.0 #17.5
 while abs(ans**2 - x) >= epsilon:
-print 'low =', low, 'high =', high, 'ans =', ans
+print 'low =', low, 'high =', high, 'ans =', ans # 0.0 , 25 , 17.5
 numGuesses += 1
 if ans**2 < x:
 low = ans
