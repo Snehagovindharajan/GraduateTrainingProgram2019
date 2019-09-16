@@ -2,10 +2,10 @@
 # 	```
 # 	a) The volume of a sphere with radius r is 4/3pr3. What is the volume of a sphere with radius 5?
 # 	Hint: 392.7 is wrong!
-#     b) Suppose the cover price of a book is Rs.24.95, but bookstores get a 40% discount. Shipping costs
+#   b) Suppose the cover price of a book is Rs.24.95, but bookstores get a 40% discount. Shipping costs
 # 	Rs.3 for the first copy and 0.75p for each additional copy. What is the total wholesale cost for
 # 	60 copies?
-#     c) If I leave my house at 6:52 am and run 1 mile at an easy pace (8:15 per mile), then 3 miles at
+#   c) If I leave my house at 6:52 am and run 1 mile at an easy pace (8:15 per mile), then 3 miles at
 # 	tempo (7:12 per mile) and 1 mile at easy pace again, what time do I get home for breakfast?
 
 # 100p = 1Rs
@@ -25,3 +25,12 @@ actual_book_cost = total_book_cost - dis_cost
 actual_book = total_book - 1
 overall_cost = (actual_book * 0.75) + actual_book_cost + 3
 print(overall_cost)
+
+# c)
+leave_house = (6 * 60 + 52) * 60
+easy_pase = (8 * 60 + 15) * 2
+tempo_pase = (7 * 60 + 15) * 3
+total_time = (leave_house + easy_pase + tempo_pase) / (60 * 60)
+total_hr = (leave_house + easy_pase + tempo_pase) // (60 * 60)
+total_min = round((total_time - total_hr) * 60)
+print("Time ",total_hr,":",total_min)
