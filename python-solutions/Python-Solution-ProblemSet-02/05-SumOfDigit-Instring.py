@@ -8,12 +8,20 @@
 
 def sumDigits(s):
     sum = 0
+    flag = 0
     for i in string:
         if i.isdigit():
             sum = sum + int(i)
-    return sum
+            flag = 1
+    return sum, flag
 
 
-string = input("Enter a string")
-result = sumDigits(string)
-print("Sum Of Digits : ", result)
+try:
+    string = input("Enter a string")
+    result, flag = sumDigits(string)
+    if flag == 0:
+        raise Exception
+    else:
+        print("Sum Of Digits : ", result)
+except Exception:
+    print("No digits in the string")
