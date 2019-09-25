@@ -1,0 +1,79 @@
+"""1)Write a Python program to combine each line from first file with the corresponding line in second file"""
+
+read_ptr = open("reading.txt",'r')
+write_ptr = open("writing.txt",'a')
+write_ptr.writelines(read_ptr.readlines())
+
+"""2) Count new lines in file"""
+
+"""3) Write a Python function that accepts a string and calculate the number of upper case letters and lower case letters.
+Sample String : 'The quick Brow Fox'
+Expected Output : 
+No. of Upper case characters : 3
+No. of Lower case Characters : 12
+Solution"""
+
+def count_upper_lower(string):
+	upper = 0
+	lower = 0
+	for i in string:
+    		if i.isalpha():
+        		if i == i.upper():
+            			upper = upper + 1
+        		if i == i.lower():
+            			lower = lower + 1
+	return upper,lower
+
+string = input("Enter a string")
+up,low = count_upper_lower(string) 
+dict1 = {'No. of Upper case characters':up,'No. of Lower case Characters':low}
+print(dict1)
+
+"""4) Write a Python function that takes a list and returns a new list with unique elements of the first list. Without using set
+Sample List : [1,2,3,3,3,3,4,5]
+Unique List : [1, 2, 3, 4, 5]
+Solution """
+def unique_list(list1):
+	list2 = []
+	for i in list1:
+		if i not in list2:
+			list2.append(i)
+	return list2
+
+list1 = [input("Enter elements of list") for i in range(11)]
+result = unique_list(list1)
+print("Unique Elements : ",result)
+
+"""5)Write a Python function to check whether a string is a pangram or not. 
+Note : Pangrams are words or sentences containing every letter of the alphabet at least once.
+For example : "The quick brown fox jumps over the lazy dog"
+Solutions : """
+
+def pangrams():
+	flag = False
+	for i in range(97,122):
+	alpha = chr(i)
+	if alpha in string:
+		continue
+	else:
+		flag = True
+		break
+
+
+str1 = input("Enter a sentence")
+string = str1.lower()
+result = pangrams(string)
+if result:
+	print("the string does not contain ",alpha," letter")
+else:
+	print("The String is a pangram")
+
+"""6)Write a Python program that accepts a hyphen-separated sequence of words as input and prints the words in a hyphen-separated sequence after sorting them alphabetically. 
+Sample Items : green-red-yellow-black-white
+Expected Result : black-green-red-white-yellow
+Solution"""
+
+string_list = [i for i in input("hyphen-separated sequence of words").split('-')]
+sorted_list = string_list.sort()
+expected_result = '-'.join(sorted_list)
+print(expected_list)
