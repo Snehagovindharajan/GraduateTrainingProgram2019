@@ -19,9 +19,10 @@ def is_abecedarian(string):
     return flag
 
 
-string = input("Enter a string")
-flag = is_abecedarian(string)
-if flag:
-    print("Not a Sorted String")
-else:
-    print("Sorted String")
+string = [i for i in input("Enter a string").split(',')]
+for i in string:
+    flag = is_abecedarian(i)
+    if flag:
+        print(i, " is Not a Sorted String")
+    else:
+        print(i, "is a Sorted String")

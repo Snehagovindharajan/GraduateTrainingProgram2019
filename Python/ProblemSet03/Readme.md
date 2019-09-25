@@ -40,7 +40,7 @@ that returns True if the word contains only letters in the list. Can you make a 
 the letters acefhlo? Other than "Hoe alfalfa?"
 
 8. Write a function called is_abecedarian that returns True if the letters in a word
-appear in alphabetical order (double letters are ok). How many abecedarian words are there?
+appear in alphabetical order (double letters are ok). How many abecedarian words are there? Abhor,Aux,Aadil,Banana
 (i.e) "Abhor" or "Aux" or "Aadil" should return "True"  Banana should return "False"
 
 9. Write a function called is_sorted that takes a list as a parameter and returns True
